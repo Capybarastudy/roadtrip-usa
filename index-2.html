@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Road Trip USA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@600;700;800;900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Patrick+Hand&display=swap">
+<style>
+/* Layout: a highway sign gantry over a road map. Green guide signs carry headings, interstate shields mark the stations, an odometer counts the miles. */
+:root{
+  --ground:#e7edf0; --card:#ffffff; --ink:#1c2328; --muted:#56636c; --hair:#c9d3d9;
+  --sign:#0c6a3c; --sign-2:#0a5a33; --sign-ink:#ffffff;
+  --shield:#1c4d8f; --shield-red:#c51a2e; --stripe:#f2b705;
+  --asphalt:#2c3236; --land:#d9e4cf; --land-edge:#a9bb9a; --water:#cfe1ee;
+  --good:#1d7f47; --good-bg:#e2f3e8; --bad:#b9352a; --bad-bg:#fbe7e4;
+  --gold:#b8860b; --gold-bg:#fff4d1; --silver:#6b7a86; --silver-bg:#eef2f5;
+  --gap:#fff3c4;
+  --f-sign:"Overpass", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", Verdana, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#171b1e; --card:#22282c; --ink:#e7ecef; --muted:#9eabb3; --hair:#3a4349;
+  --sign:#127a46; --sign-2:#0e663a; --sign-ink:#ffffff;
+  --shield:#2e64ad; --shield-red:#d8384a; --stripe:#f2b705;
+  --asphalt:#3d454b; --land:#27332b; --land-edge:#3f5244; --water:#18252e;
+  --good:#4fc283; --good-bg:#16301f; --bad:#ef7a6c; --bad-bg:#3a1d1a;
+  --gold:#f0c04a; --gold-bg:#3a3010; --silver:#b4c0c8; --silver-bg:#2b3338;
+  --gap:#4a3f12; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#171b1e; --card:#22282c; --ink:#e7ecef; --muted:#9eabb3; --hair:#3a4349;
+  --sign:#127a46; --sign-2:#0e663a; --sign-ink:#ffffff;
+  --shield:#2e64ad; --shield-red:#d8384a; --stripe:#f2b705;
+  --asphalt:#3d454b; --land:#27332b; --land-edge:#3f5244; --water:#18252e;
+  --good:#4fc283; --good-bg:#16301f; --bad:#ef7a6c; --bad-bg:#3a1d1a;
+  --gold:#f0c04a; --gold-bg:#3a3010; --silver:#b4c0c8; --silver-bg:#2b3338;
+  --gap:#4a3f12; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:16px 40px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-sign);text-wrap:balance;margin:0;line-height:1.1}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--stripe);outline-offset:2px}
+.btn{border:0;border-radius:10px;padding:12px 20px;font-family:var(--f-sign);font-weight:800;font-size:17px;letter-spacing:.02em;
+  background:var(--sign);color:var(--sign-ink);box-shadow:0 3px 0 var(--sign-2);transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--sign-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid var(--hair);box-shadow:0 3px 0 var(--hair)}
+.btn.blue{background:var(--shield);box-shadow:0 3px 0 #123565}
+.btn.small{padding:8px 14px;font-size:15px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+.card{background:var(--card);border-radius:var(--r);padding:20px;border:1px solid var(--hair)}
+
+/* Highway guide sign */
+.sign{background:var(--sign);color:var(--sign-ink);border-radius:16px;padding:18px 22px;border:3px solid var(--sign-ink);
+  box-shadow:0 0 0 3px var(--sign), 0 8px 20px rgba(0,0,0,.18);position:relative}
+.sign .eyebrow{font-family:var(--f-sign);font-weight:700;font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.9}
+.sign h1{font-size:clamp(34px,7vw,60px);font-weight:900;letter-spacing:-.01em}
+.sign h2{font-size:clamp(24px,4.5vw,34px);font-weight:900}
+.exit-tab{position:absolute;top:-20px;right:22px;background:var(--sign);color:var(--sign-ink);border:3px solid var(--sign-ink);
+  border-bottom:0;border-radius:10px 10px 0 0;padding:2px 12px;font-family:var(--f-sign);font-weight:800;font-size:14px;letter-spacing:.08em}
+
+.cityart{display:block;width:100%;height:auto;border-radius:10px}
+.sign.st{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.sign.st .artbox{width:170px;flex:none;border:3px solid var(--sign-ink);border-radius:12px;overflow:hidden;line-height:0}
+@media (max-width:520px){.sign.st .artbox{width:110px}}
+.stop .thumb{width:58px;flex:none;line-height:0;border-radius:8px;overflow:hidden}
+.bigart{width:min(320px,100%);border-radius:14px;overflow:hidden;line-height:0;border:1px solid var(--hair)}
+.map .car{pointer-events:none}
+/* Start */
+.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:stretch}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero .sign{display:flex;flex-direction:column;gap:10px;justify-content:center;min-width:0}
+.arrow-line{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--f-sign);font-weight:700;font-size:18px}
+.arrow-line span::before{content:"↑ ";opacity:.85}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700}
+input[type=text],textarea{font:inherit;font-size:19px;padding:12px 14px;border-radius:10px;border:2px solid var(--hair);background:var(--card);color:var(--ink);width:100%}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:640px){.rules{grid-template-columns:1fr}}
+.rule{display:flex;gap:12px;align-items:flex-start}
+.rule b{font-family:var(--f-sign);font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--sign);white-space:nowrap}
+
+/* Dashboard */
+.dash{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+@media (max-width:700px){.dash{grid-template-columns:1fr}}
+.odo{background:var(--asphalt);color:#fff;border-radius:12px;padding:10px 16px;display:flex;flex-direction:column;align-items:flex-start;min-width:190px}
+.odo small{font-family:var(--f-sign);letter-spacing:.16em;font-size:12px;opacity:.8;font-weight:700}
+.odo .digits{font-family:var(--f-sign);font-weight:900;font-size:34px;font-variant-numeric:tabular-nums;letter-spacing:.08em;line-height:1}
+.odo .digits span{background:#14181b;border-radius:4px;padding:2px 4px;margin-right:2px;display:inline-block}
+.who{font-family:var(--f-sign);font-weight:800;font-size:20px}
+
+/* Map */
+.mapcard{padding:10px;overflow:hidden}
+.map{width:100%;height:auto;display:block}
+.map .land{fill:var(--land);stroke:var(--land-edge);stroke-width:2;stroke-linejoin:round}
+.map .sea{fill:var(--water)}
+.map .road{fill:none;stroke:var(--asphalt);stroke-width:10;stroke-linecap:round;stroke-linejoin:round}
+.map .road.todo{opacity:.28}
+.map .lane{fill:none;stroke:var(--stripe);stroke-width:2;stroke-dasharray:9 8;stroke-linecap:round}
+.map .lane.todo{opacity:.3}
+.map .lbl{font-family:var(--f-sign);font-weight:800;font-size:17px;fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:5px;stroke-linejoin:round}
+.map .sublbl{font-family:var(--f-body);font-size:12.5px;fill:var(--muted);paint-order:stroke;stroke:var(--land);stroke-width:4px}
+.map .pin{cursor:pointer}
+.map .pin.locked{cursor:not-allowed}
+.map .pin.locked .shield-body{fill:var(--silver)}
+.map .pin.locked .shield-top{fill:var(--silver)}
+.map .pin:not(.locked):hover .shield-g{transform:scale(1.12)}
+.map .shield-g{transition:transform .15s;transform-box:fill-box;transform-origin:center}
+.map .ring{fill:none;stroke:var(--stripe);stroke-width:4}
+@media (prefers-reduced-motion:no-preference){.map .ring{animation:pulse 1.6s ease-out infinite}}
+@keyframes pulse{0%{r:20;opacity:1}100%{r:34;opacity:0}}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted);padding:6px 8px 2px}
+
+/* Station list (compact, below map) */
+.stops{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.stop{display:flex;gap:10px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:10px 12px;color:var(--ink)}
+.stop[disabled]{opacity:.5;cursor:not-allowed}
+.stop .t{font-family:var(--f-sign);font-weight:800;font-size:16px;line-height:1.15}
+.stop .s{font-size:13.5px;color:var(--muted)}
+.stop .sc{margin-left:auto;font-family:var(--f-sign);font-weight:800;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);white-space:nowrap}
+
+/* Passport */
+.passport{display:flex;gap:10px;flex-wrap:wrap}
+.stamp{width:86px;height:86px;border-radius:50%;border:3px dashed var(--hair);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:var(--f-sign);font-weight:900;font-size:12px;text-align:center;line-height:1.05;color:var(--muted);transform:rotate(-8deg);padding:6px}
+.stamp.gold{border:3px solid var(--gold);color:var(--gold);background:var(--gold-bg)}
+.stamp.silver{border:3px solid var(--silver);color:var(--silver);background:var(--silver-bg)}
+.stamp.plain{border:3px solid var(--sign);color:var(--sign)}
+.stamp .big{font-size:15px;letter-spacing:.02em}
+.stamp:nth-child(even){transform:rotate(7deg)}
+
+/* Question */
+.qhead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--hair)}
+.dot.ok{background:var(--good)} .dot.half{background:var(--stripe)} .dot.no{background:var(--bad)} .dot.now{outline:3px solid var(--shield);outline-offset:1px}
+.qcard{display:flex;flex-direction:column;gap:16px}
+.qnum{font-family:var(--f-sign);font-weight:800;letter-spacing:.12em;font-size:13px;color:var(--muted);text-transform:uppercase}
+.qtext{font-size:22px;line-height:1.55;max-width:44em}
+.gap{display:inline-block;min-width:110px;border-bottom:3px solid var(--ink);background:var(--gap);border-radius:4px 4px 0 0;padding:0 8px;text-align:center;font-weight:700}
+.clue{font-size:16px;color:var(--muted);background:var(--ground);border-radius:8px;padding:6px 12px;display:inline-block}
+.opts{display:grid;gap:10px}
+.opt{border:2px solid var(--hair);background:var(--card);color:var(--ink);border-radius:12px;padding:14px 16px;font-size:19px;text-align:left}
+.opt:hover:not([disabled]){border-color:var(--shield)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);text-decoration:line-through}
+.opt.right{border-color:var(--good);background:var(--good-bg);font-weight:700}
+.opt[disabled]{cursor:default}
+.tfn{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tfn .opt{text-align:center;font-family:var(--f-sign);font-weight:800}
+.fb{border-radius:12px;padding:14px 16px;font-size:17px}
+.fb.ok{background:var(--good-bg);border:2px solid var(--good)}
+.fb.no{background:var(--bad-bg);border:2px solid var(--bad)}
+.fb.try{background:var(--gold-bg);border:2px solid var(--gold)}
+.fb b.h{font-family:var(--f-sign);font-weight:900;font-size:19px;display:block;margin-bottom:2px}
+.textbox{border-left:5px solid var(--stripe);background:var(--ground);border-radius:0 12px 12px 0;padding:14px 18px;font-size:17px;line-height:1.6;max-height:none}
+.textbox p{margin:0 0 10px}
+.textbox h3{font-size:22px;margin-bottom:6px}
+details.read summary{cursor:pointer;font-weight:700;color:var(--shield)}
+
+/* Rush */
+.rushtop{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.timer{font-family:var(--f-sign);font-weight:900;font-size:42px;font-variant-numeric:tabular-nums}
+.bar{height:10px;background:var(--hair);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--stripe);transition:width .25s linear}
+.deword{font-family:var(--f-sign);font-weight:900;font-size:clamp(28px,6vw,44px);text-align:center;padding:14px 0}
+.rushgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.rushgrid{grid-template-columns:1fr}}
+
+/* End / certificate */
+.cert{text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.code{font-family:var(--f-sign);font-weight:900;font-size:clamp(28px,7vw,46px);letter-spacing:.08em;background:var(--asphalt);color:#fff;border-radius:12px;padding:10px 20px;
+  font-variant-numeric:tabular-nums;user-select:all;word-break:break-all}
+
+/* Board */
+.board{display:flex;flex-direction:column;gap:8px}
+.brow{display:grid;grid-template-columns:56px 1fr auto auto;gap:12px;align-items:center;background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:10px 14px}
+.brow .rk{font-family:var(--f-sign);font-weight:900;font-size:22px;text-align:center;color:#fff;background:var(--shield);border-radius:8px 8px 18px 18px;padding:4px 0}
+.brow:nth-child(1) .rk{background:var(--gold)} .brow:nth-child(2) .rk{background:var(--silver)} .brow:nth-child(3) .rk{background:#a0612b}
+.brow .nm{font-family:var(--f-sign);font-weight:800;font-size:22px;min-width:0;overflow-wrap:anywhere}
+.brow .pt{font-family:var(--f-sign);font-weight:900;font-size:22px;font-variant-numeric:tabular-nums}
+.beamer .brow .nm,.beamer .brow .pt{font-size:32px}
+.beamer .brow .rk{font-size:30px}
+.del{background:none;border:1px solid var(--hair);color:var(--muted);border-radius:8px;padding:4px 10px;font-size:14px}
+.del.arm{border-color:var(--bad);color:var(--bad);font-weight:700}
+.log{font-size:15px;display:flex;flex-direction:column;gap:4px}
+.log .ok{color:var(--good)} .log .no{color:var(--bad)}
+footer{text-align:center;font-size:14px;color:var(--muted)}
+footer a{color:var(--muted)}
+
+/* ===== World: sky, sun, clouds, ground ===== */
+:root{--sky-a:#86c8f0;--sky-b:#e3f4fc;--sun-x:22%;--sun-y:34%;--sun-c:#ffe066;--sun-glow:rgba(255,230,120,.5);--stars:0;--dim:1;--veil:0;--cloud:#ffffff;--f-hand:"Patrick Hand","Bradley Hand","Marker Felt","Comic Sans MS",cursive}
+.world{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.w-sky,.s-sky{position:absolute;inset:0;background:linear-gradient(180deg,var(--sky-a) 0%,var(--sky-b) 78%);transition:background 1.5s}
+.stars{position:absolute;inset:0;opacity:var(--stars);transition:opacity 1.5s;
+  background-image:radial-gradient(1.6px 1.6px at 20px 30px,#fff 50%,transparent 52%),radial-gradient(1.2px 1.2px at 90px 80px,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 160px 20px,#fff 50%,transparent 52%),radial-gradient(1px 1px at 230px 110px,#fff 50%,transparent 52%),radial-gradient(1.3px 1.3px at 60px 125px,#fff 50%,transparent 52%);
+  background-size:260px 150px}
+.w-sun{position:absolute;left:var(--sun-x);top:var(--sun-y);width:92px;height:92px;margin:-46px 0 0 -46px;border-radius:50%;background:var(--sun-c);box-shadow:0 0 70px 26px var(--sun-glow);transition:left 1.5s,top 1.5s,background 1.5s}
+.cloud{position:absolute;left:0;width:150px;height:46px;background:var(--cloud);border-radius:46px;opacity:.9;transition:background 1.5s}
+.cloud::before,.cloud::after{content:"";position:absolute;background:inherit;border-radius:50%}
+.cloud::before{width:64px;height:64px;left:24px;top:-30px}
+.cloud::after{width:48px;height:48px;left:76px;top:-20px}
+.world .cloud{animation:drift linear infinite}
+.world .c1{top:7%;animation-duration:120s;animation-delay:-30s}
+.world .c2{top:19%;animation-duration:170s;animation-delay:-100s;opacity:.7}
+.world .c3{top:33%;animation-duration:140s;animation-delay:-65s;opacity:.55}
+.world .c4{top:12%;animation-duration:200s;animation-delay:-160s;opacity:.8}
+@keyframes drift{from{transform:translateX(-240px)}to{transform:translateX(calc(100vw + 240px))}}
+.w-ground{position:absolute;left:0;right:0;bottom:0;width:100%;height:24vh;filter:brightness(var(--dim));transition:filter 1.5s}
+.wrap{position:relative;z-index:1}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+#snd{position:fixed;right:calc(14px + env(safe-area-inset-right, 0px));bottom:calc(14px + env(safe-area-inset-bottom, 0px));z-index:25;width:50px;height:50px;border-radius:50%;
+  border:2px solid var(--hair);background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+#snd.on{background:var(--sign);color:#fff;border-color:var(--sign)}
+.dash,.qhead{background:var(--card);border:1px solid var(--hair);border-radius:12px;padding:10px 14px}
+footer{background:var(--card);border:1px solid var(--hair);border-radius:999px;padding:6px 16px;align-self:center}
+.qarea{display:flex;flex-direction:column;gap:18px}
+
+/* ===== Driving strip ===== */
+.strip{position:relative;height:172px;border-radius:16px;overflow:hidden;border:3px solid var(--card);box-shadow:0 6px 18px rgba(0,0,0,.16);isolation:isolate}
+.strip.tall{height:230px}
+.s-sun{position:absolute;left:var(--sun-x);top:var(--sun-y);width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:var(--sun-c);box-shadow:0 0 40px 14px var(--sun-glow);transition:all 1.5s}
+.strip .cloud{top:16px;animation:sdrift 48s linear infinite}
+.strip .sc2{top:46px;animation-duration:74s;animation-delay:-36s;opacity:.7}
+@keyframes sdrift{from{transform:translateX(1100px) scale(.55)}to{transform:translateX(-240px) scale(.55)}}
+.s-far{position:absolute;left:0;bottom:30px;width:1600px;height:80px;animation:scroll calc(var(--spd) * 4) linear infinite;filter:brightness(var(--dim));transition:filter 1.5s}
+.s-mid{position:absolute;left:0;bottom:27px;width:1600px;height:60px;animation:scroll var(--spd) linear infinite;filter:brightness(var(--dim));transition:filter 1.5s}
+.s-far svg,.s-mid svg{display:block;width:1600px}
+.s-far svg{height:80px} .s-mid svg{height:60px}
+@keyframes scroll{to{transform:translateX(-800px)}}
+.farsvg{fill:#86b47a}.farsvg.skyline{fill:#73828e}.farsvg.mountains{fill:#7f95a6}.farsvg.mesa{fill:#c98a5c}.farsvg.sea{fill:#3fa7d6}
+.s-road{position:absolute;left:0;right:0;bottom:0;height:30px;background:#3a4146;border-top:3px solid #8c9396;overflow:hidden}
+.s-road::after{content:"";position:absolute;left:0;top:12px;height:3px;width:calc(100% + 52px);background:repeating-linear-gradient(90deg,#f2b705 0 26px,transparent 26px 52px);animation:dash calc(var(--spd) * .065) linear infinite}
+@keyframes dash{to{transform:translateX(-52px)}}
+.s-car{position:absolute;bottom:5px;left:calc(2% + var(--prog, 0) * 54%);width:128px;z-index:2;transition:left 1s cubic-bezier(.34,1.35,.5,1)}
+.s-car svg{display:block;width:100%;height:auto}
+.s-car .body{animation:bob .32s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-2px)}}
+.wheel{transform-box:fill-box;transform-origin:center;animation:spin .45s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.s-car.shake{animation:shake .55s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-3deg)}40%{transform:translateX(7px) rotate(2deg)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.puff{position:absolute;bottom:16px;width:24px;height:24px;border-radius:50%;background:rgba(110,110,110,.6);z-index:1;animation:puff 1.1s ease-out forwards}
+@keyframes puff{to{transform:translate(-56px,-34px) scale(2.8);opacity:0}}
+.s-bill{position:absolute;right:3%;bottom:27px;width:124px;z-index:1;display:flex;flex-direction:column;align-items:center}
+.s-bill .board{background:#fff;border:3px solid #2c3236;border-radius:8px;padding:3px;width:100%}
+.s-bill .board svg{border-radius:4px}
+.s-bill .lab{font-family:var(--f-sign);font-weight:900;font-size:11.5px;color:#fff;background:#0c6a3c;text-align:center;border-radius:4px;margin-top:3px;padding:2px 4px;letter-spacing:.04em;line-height:1.15}
+.s-bill .legs{display:flex;gap:64px}.s-bill .legs i{display:block;width:5px;height:12px;background:#5b4636}
+.s-fuel{position:absolute;left:10px;top:10px;z-index:3;display:flex;align-items:center;gap:4px;background:rgba(20,24,27,.8);color:#fff;border-radius:10px;padding:6px 10px;font-family:var(--f-sign);font-weight:800;font-size:12px;letter-spacing:.12em}
+.s-fuel span{margin-right:4px}
+.s-fuel i{width:12px;height:16px;border-radius:3px;background:#59636a;transition:background .3s}
+.s-fuel i.on{background:#3fcf7b}.s-fuel i.low{background:#ff6b5a}
+@media (max-width:560px){.strip{height:150px}.strip.tall{height:190px}.s-car{width:100px}.s-bill{width:92px}.s-bill .lab{font-size:9.5px}.s-bill .legs{gap:46px}}
+
+/* ===== Locals & postcard ===== */
+.local{display:flex;gap:12px;align-items:flex-start}
+.ava{width:76px;height:76px;flex:none}
+.bubble{position:relative;flex:1;min-width:0;background:var(--card);border:2px solid var(--hair);border-radius:16px;padding:12px 16px}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:9px solid transparent;border-right-color:var(--hair);border-left:0}
+.bubble .nm{font-family:var(--f-sign);font-weight:900;font-size:18px;color:var(--shield)}
+.bubble p{margin:4px 0 0}
+.bubble .hand{font-family:var(--f-hand);font-size:22px;line-height:1.3}
+.postcard{background:var(--card);border:1px solid var(--hair);border-radius:var(--r);padding:18px 20px;transform:rotate(-1.2deg);box-shadow:0 8px 20px rgba(0,0,0,.12);min-width:0}
+.postcard .pc-stamp{float:right;width:96px;margin:0 0 8px 12px;padding:4px;border:2px dashed var(--hair);transform:rotate(4deg);line-height:0;background:var(--card)}
+.postcard p{font-family:var(--f-hand);font-size:22px;line-height:1.35;margin:0}
+.postcard .from{text-align:right;margin-top:6px}
+
+/* ===== Map extras ===== */
+.map .veil{fill:#0b1430;opacity:var(--veil);pointer-events:none;transition:opacity 1.5s}
+.map .mcloud{animation:mdrift linear infinite;pointer-events:none}
+@keyframes mdrift{from{transform:translateX(-140px)}to{transform:translateX(900px)}}
+.map .plane{animation:fly 28s linear infinite;pointer-events:none}
+@keyframes fly{0%{transform:translate(-90px,96px)}100%{transform:translate(860px,30px)}}
+.map .wave{fill:none;stroke:#ffffff;stroke-width:2;stroke-linecap:round;animation:wv 3.2s ease-in-out infinite}
+@keyframes wv{0%,100%{transform:translateX(0);opacity:.15}50%{transform:translateX(6px);opacity:.8}}
+.map .bob{animation:mbob .5s ease-in-out infinite alternate}
+@keyframes mbob{to{transform:translateY(-1.5px)}}
+@media (prefers-reduced-motion:reduce){
+  .cloud,.map .mcloud,.map .plane,.map .wave,.map .bob,.s-far,.s-mid,.s-road::after,.wheel,.s-car .body,.s-car.shake,.puff{animation:none!important}
+}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--asphalt);color:#fff;padding:10px 18px;border-radius:10px;font-weight:700;z-index:20}
+@media (prefers-reduced-motion:no-preference){
+  .pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{0%{transform:scale(.4) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+}
+</style>
+
+</head>
+<body>
+<div class="world" aria-hidden="true">
+  <div class="w-sky"></div><div class="stars"></div><div class="w-sun"></div>
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="cloud c4"></div>
+  <svg class="w-ground" viewBox="0 0 1200 200" preserveAspectRatio="none">
+    <path d="M0 120 L80 120 L96 84 L210 84 L226 120 L420 120 L436 100 L520 100 L532 120 L760 120 L780 76 L900 76 L918 120 L1200 120 L1200 200 L0 200Z" fill="#d39a6a" opacity=".55"/>
+    <path d="M0 150 Q150 110 300 140 Q460 170 620 132 Q800 96 960 140 Q1080 168 1200 136 L1200 200 L0 200Z" fill="#9cbf7f"/>
+    <path d="M0 176 Q300 160 600 172 Q900 184 1200 168 L1200 200 L0 200Z" fill="#7aa866"/>
+  </svg>
+</div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<button id="snd" type="button" aria-label="Sound on or off"></button>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ================= CONTENT ================= */
+const STATIONS = [
+ { id:"ny", city:"New York", state:"NY", lon:-74.0, lat:40.7, lab:"t", topic:"Vocabulary", sub:"Words in context",
+   intro:"Fill in the missing words. The clue helps you: = synonym · > definition · ↔ opposite.",
+   items:[
+   {t:"type", q:"Every day thousands of people ___ from the suburbs to Manhattan.", clue:"= to travel to work and back every day", a:["commute"], ex:"to commute = pendeln · a commuter = ein Pendler"},
+   {t:"type", q:"The ___ of New York with all its skyscrapers is famous all over the world.", clue:"> the shape of tall buildings against the sky", a:["skyline"], ex:"skyline = Skyline"},
+   {t:"type", q:"Subway, buses and ferries – ___ in New York is great.", clue:"= buses, trains etc.", a:["public transport"], ex:"public transport = öffentliche Verkehrsmittel"},
+   {t:"type", q:"We were late because there was a huge ___ on Fifth Avenue.", clue:"> a long line of cars that can’t move", a:["traffic jam"], ex:"traffic jam = Stau"},
+   {t:"type", q:"Take the ___ to the 86th floor of the Empire State Building.", clue:"= lift (BE)", a:["elevator"], ex:"elevator (AE) = lift (BE) = Aufzug"},
+   {t:"type", q:"Lots of people live in a quiet ___ and work downtown.", clue:"↔ downtown", a:["suburb"], ex:"suburb = Vorort"},
+   {t:"type", q:"The Statue of Liberty is a ___ of freedom.", clue:"> a picture or thing which means something special", a:["symbol"], ex:"symbol = Symbol"},
+   {t:"type", q:"In the past, millions of ___ came to New York by ship.", clue:"> people who come to live in a new country", a:["immigrants"], ex:"immigrant = Einwanderer · to immigrate = einwandern"},
+   {t:"type", q:"New York has people from lots of different ___.", clue:"> the way of life, art and traditions of a group of people", a:["cultures"], ex:"culture = Kultur"},
+   {t:"type", q:"Social media can ___ what young people buy.", clue:"= to have an effect on", a:["influence"], ex:"to influence = beeinflussen"},
+   {t:"type", q:"There are no ___ to this rule – everybody has to wear a helmet.", clue:"> something that doesn’t follow the rule", a:["exceptions"], ex:"exception = Ausnahme"},
+   {t:"type", q:"Stop ___ about the weather and enjoy the trip!", clue:"> saying that you aren’t happy with something", a:["complaining"], ex:"to complain = sich beschweren · after stop → -ing"},
+   {t:"type", q:"All the cars and taxis cause a lot of air ___ in big cities.", clue:"> making air, water or land dirty", a:["pollution"], ex:"pollution = Verschmutzung"},
+   {t:"type", q:"Fifth Avenue is a famous ___ in Manhattan.", clue:"> a wide street, often with trees or buildings on both sides", a:["avenue"], ex:"avenue = Allee; Boulevard"},
+   {t:"type", q:"The ___ from New York to Los Angeles is about 2,800 miles by car.", clue:"> how far it is from one place to another", a:["distance"], ex:"distance = Entfernung · distant = entfernt"},
+   {t:"type", q:"Long ago, thousands of ___ travelled west to start a new life.", clue:"> people who go to live in a new, wild place", a:["settlers"], ex:"settler = Siedler · to settle = sich niederlassen"}
+ ]},
+ { id:"mia", city:"Miami", state:"FL", lon:-80.2, lat:25.8, lab:"r", topic:"G2 Negative questions", sub:"Little Havana",
+   intro:"Make negative questions: helping verb + n’t + subject + main verb. Use short forms (don’t, isn’t, haven’t …).",
+   items:[
+   {t:"choice", q:"You think José is from Cuba, but you want to check it. What do you say?", o:["Isn’t José from Cuba?","Doesn’t José from Cuba?","Not is José from Cuba?"], c:0, ex:"be as main verb: Isn’t + subject + rest? → Isn’t José from Cuba?"},
+   {t:"type", q:"___ Spanish? Everybody speaks it in Little Havana!", clue:"José · not speak", a:["Doesn't José speak","Doesn't Jose speak"], ex:"he/she/it in the simple present → Doesn’t … + base form: Doesn’t José speak …?"},
+   {t:"type", q:"It’s so hot today. Why ___ to the beach?", clue:"we · not go", a:["don't we go"], ex:"Suggestion: Why don’t we … ? → Why don’t we go to the beach?"},
+   {t:"type", q:"___ a Cuban sandwich yet? It’s delicious!", clue:"you · not try", a:["Haven't you tried"], ex:"present perfect: Haven’t you + 3rd form → Haven’t you tried …?"},
+   {t:"choice", q:"Your friend has never heard of salsa. You are really surprised. What do you say?", o:["Haven’t you ever heard of salsa?","Don’t you ever heard of salsa?","Haven’t you ever hear of salsa?"], c:0, ex:"Surprise: Haven’t you ever + 3rd form (heard)?"},
+   {t:"type", q:"Why ___ at the salsa party last night?", clue:"you · not be", a:["weren't you"], ex:"be in the simple past: Why weren’t you … ?"},
+   {t:"type", q:"___ dance salsa? You told me you had lessons!", clue:"you · not can", a:["Can't you"], ex:"can → can’t: Can’t you dance salsa?"},
+   {t:"choice", q:"Which question is correct?", o:["Why didn’t you call me?","Why you didn’t call me?","Why didn’t you called me?"], c:0, ex:"Question word + didn’t + subject + BASE form: Why didn’t you call me?"},
+   {t:"type", q:"___ hungry? Let’s get some Cuban food!", clue:"you · not be", a:["Aren't you"], ex:"be as main verb: Aren’t you hungry?"},
+   {t:"type", q:"___ your homework yesterday?", clue:"you · not do", a:["Didn't you do"], ex:"simple past: Didn’t + subject + base form → Didn’t you do …?"},
+   {t:"choice", q:"You want to suggest a salsa class. What do you say?", o:["Why don’t we go to a salsa class?","Why we don’t go to a salsa class?","Why doesn’t we go to a salsa class?"], c:0, ex:"Suggestion: Why don’t we + base form …?"},
+   {t:"type", q:"___ the new music video yet? Everybody is talking about it!", clue:"you · not see", a:["Haven't you seen"], ex:"present perfect: Haven’t you + 3rd form (seen)?"},
+   {t:"type", q:"___ on Saturdays?", clue:"your parents · not work", a:["Don't your parents work"], ex:"plural subject, simple present → Don’t your parents work …?"},
+   {t:"choice", q:"It’s your friend’s birthday and there’s no cake. You’re surprised. What do you say?", o:["Hasn’t anyone made you a cake?","Hasn’t anyone make you a cake?","Doesn’t anyone made you a cake?"], c:0, ex:"Hasn’t + subject + 3rd form (made)."},
+   {t:"type", q:"What ___? I can explain it again.", clue:"you · not understand", a:["don't you understand"], ex:"Question word first: What don’t you understand?"},
+   {t:"type", q:"___ last summer? I thought you were there together!", clue:"Lisa · not be · in Miami", a:["Wasn't Lisa in Miami"], ex:"be in the simple past: Wasn’t Lisa in Miami?"}
+ ]},
+ { id:"nola", city:"New Orleans", state:"LA", lon:-90.1, lat:29.95, lab:"b", topic:"G1 Passive · present", sub:"Mardi Gras",
+   intro:"Use the passive in the simple present: am / is / are + 3rd form.",
+   items:[
+   {t:"type", q:"At Mardi Gras, colourful masks ___ by lots of people.", clue:"wear", a:["are worn"], ex:"plural → are + 3rd form: wear – wore – worn"},
+   {t:"type", q:"A small plastic baby ___ in every king cake.", clue:"hide", a:["is hidden"], ex:"singular → is + 3rd form: hide – hid – hidden"},
+   {t:"type", q:"Jazz ___ in lots of clubs in the French Quarter.", clue:"play", a:["is played"], ex:"Jazz is singular → is played"},
+   {t:"type", q:"King cakes ___ during the Mardi Gras season.", clue:"eat", a:["are eaten"], ex:"eat – ate – eaten → are eaten"},
+   {t:"choice", q:"Beads ___ from the parade floats every year.", o:["are thrown","is thrown","are throw"], c:0, ex:"Beads = plural → are + 3rd form (thrown)."},
+   {t:"type", q:"Lots of Vietnamese food ___ at the festival.", clue:"serve", a:["is served"], ex:"food is uncountable → is served"},
+   {t:"type", q:"Sorry, credit cards ___ in this little café.", clue:"not accept", a:["aren't accepted","are not accepted"], ex:"negative: aren’t + 3rd form → aren’t accepted"},
+   {t:"choice", q:"New Orleans ___ many different cultures.", o:["is influenced by","is influenced from","influenced by"], c:0, ex:"Who does it? → by: … is influenced by many cultures."},
+   {t:"type", q:"The French Quarter ___ by thousands of tourists every day.", clue:"visit", a:["is visited"], ex:"singular → is + visited"},
+   {t:"type", q:"Many old houses ___ with colourful flowers.", clue:"decorate", a:["are decorated"], ex:"plural → are + decorated"},
+   {t:"type", q:"Gumbo ___ with seafood or chicken.", clue:"make", a:["is made"], ex:"make – made – made → is made"},
+   {t:"choice", q:"The big parade ___ on TV every year.", o:["is shown","are shown","is show"], c:0, ex:"parade = singular → is + shown"},
+   {t:"type", q:"Cars ___ on some streets in the French Quarter.", clue:"not allow", a:["aren't allowed","are not allowed"], ex:"negative: aren’t + allowed"},
+   {t:"type", q:"___ only at Mardi Gras?", clue:"king cake · eat", a:["Is king cake eaten","Is the king cake eaten"], ex:"question: Is + subject + 3rd form → Is king cake eaten …?"},
+   {t:"choice", q:"English ___ everywhere in New Orleans.", o:["is spoken","are spoken","is speaked"], c:0, ex:"speak – spoke – spoken → is spoken"},
+   {t:"type", q:"At the parade, lots of photos ___ every minute.", clue:"take", a:["are taken"], ex:"take – took – taken → are taken"}
+ ]},
+ { id:"chi", city:"Chicago", state:"IL", lon:-87.6, lat:41.9, lab:"r", topic:"G1 Passive · past", sub:"The Windy City",
+   intro:"Use the passive in the simple past: was / were + 3rd form.",
+   items:[
+   {t:"type", q:"A big part of Chicago ___ by a fire in 1871.", clue:"destroy", a:["was destroyed"], ex:"singular, past → was + destroyed"},
+   {t:"type", q:"Many houses ___ of wood before the fire.", clue:"make", a:["were made"], ex:"plural, past → were + made"},
+   {t:"type", q:"The first skyscraper in the world ___ in Chicago in 1885.", clue:"build", a:["was built"], ex:"build – built – built → was built"},
+   {t:"type", q:"The first Ferris wheel ___ for a world fair in Chicago in 1893.", clue:"build", a:["was built"], ex:"was + 3rd form: was built"},
+   {t:"type", q:"Until 2009, the Willis Tower ___ the Sears Tower.", clue:"call", a:["was called"], ex:"was + called"},
+   {t:"choice", q:"The tourists ___ to the 103rd floor by a very fast elevator.", o:["were taken","was taken","were took"], c:0, ex:"tourists = plural → were + taken (take – took – taken)"},
+   {t:"choice", q:"Lots of houses were destroyed ___ the fire.", o:["by","from","of"], c:0, ex:"In passive sentences we say who/what did it with by."},
+   {t:"choice", q:"When ___ the Ferris wheel built?", o:["was","were","did"], c:0, ex:"Question in the passive: Was/Were + subject + 3rd form. Ferris wheel = singular → was."},
+   {t:"type", q:"Thousands of people ___ homeless by the fire.", clue:"leave", a:["were left"], ex:"leave – left – left → were left"},
+   {t:"type", q:"After the fire, large parts of the city ___ very quickly.", clue:"rebuild", a:["were rebuilt"], ex:"rebuild – rebuilt – rebuilt → were rebuilt"},
+   {t:"type", q:"Chicago-style deep-dish pizza ___ in the 1940s.", clue:"invent", a:["was invented"], ex:"singular → was + invented"},
+   {t:"type", q:"The fire ___ for two days.", clue:"not stop", a:["wasn't stopped","was not stopped"], ex:"negative: wasn’t + stopped"},
+   {t:"choice", q:"These photos ___ at the top of the Willis Tower.", o:["were taken","was taken","were take"], c:0, ex:"photos = plural → were + taken"},
+   {t:"type", q:"When ___? – In the early 1970s.", clue:"the Willis Tower · build", a:["was the Willis Tower built"], ex:"question: When + was + subject + 3rd form?"},
+   {t:"choice", q:"Our school trip ___ because of the snow.", o:["was cancelled","were cancelled","was cancel"], c:0, ex:"trip = singular → was + cancelled (BE spelling with -ll-)"},
+   {t:"type", q:"All the tickets for the game ___ online in ten minutes.", clue:"sell", a:["were sold"], ex:"sell – sold – sold → were sold"}
+ ]},
+ { id:"sea", city:"Seattle", state:"WA", lon:-122.3, lat:47.6, lab:"r", topic:"Word families", sub:"Opposites · AE/BE",
+   intro:"Build word families and find opposites.",
+   items:[
+   {t:"type", q:"pollution → the verb: to ___", clue:"Verschmutzung → verschmutzen", a:["pollute","to pollute"], ex:"pollution – to pollute – polluted"},
+   {t:"type", q:"to attract → the adjective: ___", clue:"anziehen → attraktiv", a:["attractive"], ex:"to attract – attraction – attractive"},
+   {t:"type", q:"to decide → the noun: a ___", clue:"entscheiden → Entscheidung", a:["decision"], ex:"to decide – decision (spelling: -sion!)"},
+   {t:"type", q:"to succeed → the adjective: ___", clue:"Erfolg haben → erfolgreich", a:["successful"], ex:"to succeed – success – successful (double c, double s, -ful with one l)"},
+   {t:"type", q:"Tyler loves being outdoors. ↔ When it rains, he stays ___.", clue:"↔ outdoors", a:["indoors"], ex:"outdoors ↔ indoors"},
+   {t:"type", q:"to immigrate ↔ to ___", clue:"↔ to immigrate", a:["emigrate","to emigrate"], ex:"to emigrate = to leave your country ↔ to immigrate = to come into a new country"},
+   {t:"type", q:"employee ↔ ___", clue:"↔ employee", a:["employer"], ex:"employee (Angestellte/r) ↔ employer (Arbeitgeber)"},
+   {t:"choice", q:"French fries (AE) are called ___ in British English.", o:["chips","crisps","fries"], c:0, ex:"French fries (AE) = chips (BE). Crisps (BE) are potato chips (AE)!"},
+   {t:"type", q:"the future ↔ the ___", clue:"↔ future", a:["past"], ex:"future (Zukunft) ↔ past (Vergangenheit)"},
+   {t:"type", q:"low ↔ ___", clue:"↔ low", a:["high"], ex:"low (niedrig) ↔ high (hoch)"},
+   {t:"type", q:"unemployed → the noun: ___", clue:"arbeitslos → Arbeitslosigkeit", a:["unemployment"], ex:"unemployed – unemployment"},
+   {t:"type", q:"to expect → the noun: an ___", clue:"erwarten → Erwartung", a:["expectation"], ex:"to expect – expectation"},
+   {t:"type", q:"motivated → the noun: ___", clue:"motiviert → Motivation", a:["motivation"], ex:"to motivate – motivated – motivation"},
+   {t:"type", q:"foreign → the person: a ___", clue:"ausländisch → Ausländer/in", a:["foreigner"], ex:"foreign – foreigner"},
+   {t:"type", q:"to be wrong ↔ to be ___", clue:"↔ to be wrong", a:["right"], ex:"to be wrong (unrecht haben) ↔ to be right (recht haben)"},
+   {t:"choice", q:"‘We waited in line for an hour.’ (AE) – In British English you wait in a ___.", o:["queue","row","list"], c:0, ex:"line (AE) = queue (BE) = Schlange"}
+ ]},
+ { id:"lv", city:"Las Vegas", state:"NV", lon:-115.1, lat:36.2, lab:"r", topic:"Mixed grammar", sub:"Viva Las Vegas",
+   intro:"Passive and negative questions mixed. Find the correct sentence.",
+   items:[
+   {t:"choice", q:"Which sentence is correct?", o:["Brad was asked to sing at the audition.","Brad were asked to sing at the audition.","Brad was ask to sing at the audition."], c:0, ex:"Brad = singular → was + 3rd form (asked)."},
+   {t:"choice", q:"Which sentence is correct?", o:["Aren’t you nervous, Brad?","Not are you nervous, Brad?","Aren’t you be nervous, Brad?"], c:0, ex:"be as main verb: Aren’t + you + rest?"},
+   {t:"choice", q:"Which sentence is correct?", o:["The show is watched by thousands of people.","The show is watched from thousands of people.","The show is watch by thousands of people."], c:0, ex:"passive + by: is watched by …"},
+   {t:"choice", q:"Which sentence is correct?", o:["Didn’t you see the Elvis show?","Didn’t you saw the Elvis show?","Don’t you saw the Elvis show?"], c:0, ex:"After didn’t: base form → Didn’t you see …?"},
+   {t:"choice", q:"Which sentence is correct?", o:["Wedding chapels are visited by lots of couples.","Wedding chapels is visited by lots of couples.","Wedding chapels are visit by lots of couples."], c:0, ex:"chapels = plural → are + visited"},
+   {t:"type", q:"Find the mistake and write the sentence correctly: <i>“The casino build in 1990.”</i>", clue:"passive · simple past", a:["The casino was built in 1990"], ex:"was + 3rd form: The casino was built in 1990."},
+   {t:"type", q:"Find the mistake and write the sentence correctly: <i>“Why you don’t come with us?”</i>", clue:"negative question", a:["Why don't you come with us"], ex:"Question word + don’t + subject + verb: Why don’t you come with us?"},
+   {t:"choice", q:"Las Vegas ___ ‘Sin City’.", o:["is often called","often calls","is often call"], c:0, ex:"passive: is + called (adverbs like often go after is)."},
+   {t:"choice", q:"Which sentence is correct?", o:["Isn’t the show at eight o’clock?","Isn’t the show is at eight o’clock?","Doesn’t the show at eight o’clock?"], c:0, ex:"be as main verb: Isn’t + subject + rest?"},
+   {t:"choice", q:"Which sentence is correct?", o:["Brad was led to the waiting room by a receptionist.","Brad was lead to the waiting room by a receptionist.","Brad were led to the waiting room by a receptionist."], c:0, ex:"lead – led – led → was led"},
+   {t:"type", q:"Find the mistake and write the sentence correctly: <i>“Doesn’t Brad sings well?”</i>", clue:"negative question", a:["Doesn't Brad sing well"], ex:"After doesn’t: base form → Doesn’t Brad sing well?"},
+   {t:"type", q:"Find the mistake and write the sentence correctly: <i>“The tickets was sold in an hour.”</i>", clue:"passive · simple past", a:["The tickets were sold in an hour"], ex:"tickets = plural → were sold"},
+   {t:"choice", q:"___ you hear the music? It’s so loud!", o:["Can’t","Don’t can","Not can"], c:0, ex:"can → can’t + subject + base form"},
+   {t:"choice", q:"In Las Vegas, the lights ___ on all night.", o:["are left","is left","are leave"], c:0, ex:"lights = plural → are + left"},
+   {t:"type", q:"Find the mistake and write the sentence correctly: <i>“Why you weren’t at the audition?”</i>", clue:"negative question", a:["Why weren't you at the audition"], ex:"Question word + weren’t + subject: Why weren’t you …?"},
+   {t:"choice", q:"Lots of weddings ___ in Las Vegas every year.", o:["are held","is held","are hold"], c:0, ex:"hold – held – held → are held"}
+ ]},
+ { id:"la", city:"Los Angeles", state:"CA", lon:-118.2, lat:34.05, lab:"b", topic:"Reading", sub:"Postcard from L.A.",
+   intro:"Read Finn’s blog post, then answer: true, false or not in the text?",
+   text:`<h3>Sun, traffic and a roller coaster</h3>
+<p><b>1</b> Hi everyone! I’m Finn and I spent two weeks with my cousin Ella in Los Angeles last summer. I had expected a city like New York with lots of skyscrapers, but L.A. is very different. It’s huge and very spread out, so you need a car for almost everything. Public transport isn’t great, and the traffic jams are terrible – once we sat in the car for two hours!</p>
+<p><b>2</b> On my first weekend we visited the Santa Monica Pier. There’s a small roller coaster right next to the ocean. We had to wait in line for 40 minutes, and Ella got really frustrated. But the ride was worth it!</p>
+<p><b>3</b> The best day was our trip to Griffith Observatory. From there you can see the Hollywood sign and the downtown skyline. Ella’s friend Marco showed us around. He was born in Mexico and came to the USA when he was six. He says L.A. is a city of immigrants – more than a third of the people who live here were born in another country.</p>
+<p><b>4</b> One evening we went to a baseball game. I didn’t understand the rules at all, but the hot dogs were great and the fans were really loud. Ella cheered her team on the whole time.</p>
+<p><b>5</b> The food in L.A. is amazing. Because so many people from Mexico, Korea and lots of other countries live here, you can eat almost anything. My favourite was a taco truck near Ella’s house – the tacos were cheap and delicious.</p>
+<p><b>6</b> Would I go back? Definitely – but next time I want to try a bike tour!</p>`,
+   items:[
+   {t:"tfn", q:"Finn thought L.A. would be like New York.", c:0, ex:"Paragraph 1: “I had expected a city like New York …”"},
+   {t:"tfn", q:"In L.A. you can easily go everywhere by bus and train.", c:1, ex:"Paragraph 1: “you need a car for almost everything. Public transport isn’t great.”"},
+   {t:"tfn", q:"Finn and Ella went to the pier by bike.", c:2, ex:"The text doesn’t say how they got to the pier."},
+   {t:"tfn", q:"The roller coaster at the pier is next to the ocean.", c:0, ex:"Paragraph 2: “a small roller coaster right next to the ocean.”"},
+   {t:"tfn", q:"Marco was born in the USA.", c:1, ex:"Paragraph 3: “He was born in Mexico.”"},
+   {t:"tfn", q:"Ella has been to Griffith Observatory many times.", c:2, ex:"The text doesn’t say how often Ella has been there."},
+   {t:"type", q:"Find the word in paragraph 2: <i>angry or annoyed because you can’t do what you want</i>", clue:"paragraph 2", a:["frustrated"], ex:"frustrated = angry, annoyed (frustriert)"},
+   {t:"type", q:"Find the word in paragraph 3: <i>the shape of the tall buildings against the sky</i>", clue:"paragraph 3", a:["skyline"], ex:"the downtown skyline"},
+   {t:"tfn", q:"Finn understood the rules of baseball.", c:1, ex:"Paragraph 4: “I didn’t understand the rules at all.”"},
+   {t:"tfn", q:"Ella cheered her team on at the game.", c:0, ex:"Paragraph 4: “Ella cheered her team on the whole time.”"},
+   {t:"tfn", q:"The hot dogs at the stadium were expensive.", c:2, ex:"The text only says the hot dogs were great – nothing about the price."},
+   {t:"tfn", q:"You can find food from many countries in L.A.", c:0, ex:"Paragraph 5: “you can eat almost anything.”"},
+   {t:"tfn", q:"The tacos from the truck were expensive.", c:1, ex:"Paragraph 5: “the tacos were cheap and delicious.”"},
+   {t:"tfn", q:"Finn wants to visit L.A. again.", c:0, ex:"Paragraph 6: “Would I go back? Definitely.”"},
+   {t:"type", q:"Find the words in paragraph 1: <i>long lines of cars that can’t move</i>", clue:"paragraph 1 · two words", a:["traffic jams","traffic jam"], ex:"traffic jam = Stau"},
+   {t:"type", q:"Find the word in paragraph 3: <i>people who come to live in a new country</i>", clue:"paragraph 3", a:["immigrants","immigrant"], ex:"immigrant = Einwanderer"}
+ ]}
+];
+
+const RUSH = [["Stau","traffic jam"],["Vorort","suburb"],["Entfernung","distance"],["Verschmutzung","pollution"],["Luft","air"],["Geschwindigkeit","speed"],
+["Ausnahme","exception"],["sich beschweren","to complain"],["pendeln","to commute"],["beeinflussen","to influence"],["gelangweilt","bored"],["Zwiebel","onion"],
+["verletzt","injured"],["Kaufhaus","department store"],["Eislaufbahn","ice rink"],["anziehen (Touristen)","to attract"],["niedrig","low"],["Entscheidung","decision"],
+["arbeitslos","unemployed"],["Gemeinschaft","community"],["kennen lernen","to get to know"],["zurücklassen","to leave behind"],["ehrgeizig","ambitious"],
+["Zukunft","future"],["Staatsbürger","citizen"],["Grenze","border"],["Ergebnis","result"],["Zutat","ingredient"],["Senf","mustard"],["Esslöffel","tablespoon"],
+["Achterbahn","roller coaster"],["Kunde","customer"],["pünktlich","on time"],["erwarten","to expect"],["Herausforderung","challenge"],["Schlange (zum Warten)","line"],
+["Erinnerung","memory"],["für immer","forever"],["Tierheim","animal shelter"],["Lebensmittel","groceries"],["Siedler","settler"],["Volksstamm","tribe"],
+["Bürgerrechte","civil rights"],["Bewegung","movement"],["Gelegenheit","opportunity"],["tapfer","brave"],["Arbeitszeit","working hours"],["sich anpassen","to adapt"],
+["Erfolg haben","to succeed"],["versagen","to fail"],["motiviert","motivated"],["Aufzug","elevator"],["Allee","avenue"],["Unterhaltung","entertainment"],
+["Paar","couple"],["Ahornblatt","maple leaf"],["Stadtzentrum","downtown"],["Architektur","architecture"],["Himmel","sky"],["Galerie","gallery"],["Perle","bead"],
+["saure Gurke","pickle"],["streichen","to spread"],["Angestellte(r)","employee"],["Geisterbahn","ghost train"],["erschrecken","to scare"],["Talent; Geschenk","gift"],["Lehrer(in), Trainer(in)","instructor"]];
+
+const SALT = "rl8-u1-roadtrip";
+const PER = 100, HALF = 50, RUSH_SEC = 60;
+
+
+/* ================= CITY ART (flat, hand-drawn) ================= */
+const ART = {
+ny:`<rect width="160" height="100" fill="#bfe0f5"/><circle cx="132" cy="20" r="9" fill="#f9c74f"/>
+<g fill="#8a97a3"><rect x="70" y="40" width="14" height="46"/><rect x="86" y="24" width="12" height="62"/><polygon points="86,24 92,8 98,24"/><rect x="91" y="2" width="2" height="8"/>
+<rect x="100" y="34" width="16" height="52"/><rect x="118" y="46" width="12" height="40"/><rect x="132" y="30" width="14" height="56"/><rect x="148" y="50" width="12" height="36"/></g>
+<g fill="#dfe8ef" opacity=".8"><rect x="73" y="46" width="3" height="3"/><rect x="78" y="46" width="3" height="3"/><rect x="103" y="40" width="3" height="3"/><rect x="109" y="40" width="3" height="3"/><rect x="135" y="36" width="3" height="3"/><rect x="140" y="36" width="3" height="3"/></g>
+<rect y="82" width="160" height="18" fill="#4f86bf"/><path d="M0 88 q8 -4 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" stroke="#bfe0f5" stroke-width="1.5" fill="none"/>
+<rect x="22" y="72" width="30" height="12" fill="#a7b5a0"/><rect x="27" y="64" width="20" height="9" fill="#b9c6b2"/>
+<path d="M30 64 L32 36 Q37 31 42 36 L44 64 Z" fill="#6fae96"/><circle cx="37" cy="30" r="5.5" fill="#6fae96"/>
+<g stroke="#6fae96" stroke-width="2.2" stroke-linecap="round"><line x1="37" y1="24" x2="37" y2="19"/><line x1="33" y1="25" x2="30" y2="21"/><line x1="41" y1="25" x2="44" y2="21"/></g>
+<path d="M41 38 L49 14" stroke="#6fae96" stroke-width="4.5" stroke-linecap="round"/><path d="M46 12 h7 l-1.5 4 h-4 z" fill="#6fae96"/><path d="M49.5 10 q-3.5 -6 0 -11 q3.5 6 0 11z" fill="#f4a32a"/>
+<rect x="31" y="42" width="6" height="9" rx="1" fill="#5d9c84"/>`,
+mia:`<rect width="160" height="100" fill="#ffd6a5"/><circle cx="118" cy="30" r="16" fill="#ff9e5e"/><circle cx="118" cy="30" r="11" fill="#ffc46b"/>
+<rect x="70" y="30" width="42" height="52" fill="#f6b8c6"/><rect x="70" y="30" width="42" height="7" fill="#7fd1c9"/><rect x="84" y="20" width="14" height="11" fill="#f6b8c6"/><rect x="84" y="18" width="14" height="3" fill="#7fd1c9"/>
+<g fill="#fff" opacity=".85"><rect x="76" y="44" width="8" height="10" rx="4"/><rect x="87" y="44" width="8" height="10" rx="4"/><rect x="98" y="44" width="8" height="10" rx="4"/><rect x="76" y="60" width="8" height="10" rx="4"/><rect x="98" y="60" width="8" height="10" rx="4"/></g>
+<rect x="87" y="62" width="8" height="20" fill="#7fd1c9"/>
+<rect y="74" width="160" height="12" fill="#3fa7d6"/><path d="M0 78 q6 -3 12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0 t12 0" stroke="#bfe9f7" stroke-width="1.4" fill="none"/>
+<rect y="84" width="160" height="16" fill="#f4d58d"/>
+<path d="M40 92 Q36 60 46 30" stroke="#8a5a32" stroke-width="5" fill="none" stroke-linecap="round"/>
+<g fill="#2f9e55"><path d="M46 30 Q30 22 18 32 Q32 26 46 32z"/><path d="M46 30 Q60 18 74 26 Q60 24 46 33z"/><path d="M46 30 Q40 14 26 12 Q40 18 45 32z"/><path d="M46 30 Q56 12 68 12 Q54 20 47 33z"/><path d="M46 31 Q62 34 66 46 Q56 36 46 33z"/></g>
+<circle cx="47" cy="33" r="2.6" fill="#6b4422"/><circle cx="43" cy="33" r="2.6" fill="#6b4422"/>`,
+nola:`<rect width="160" height="100" fill="#3b2a5e"/>
+<g fill="#f2c94c"><circle cx="12" cy="14" r="1.5"/><circle cx="40" cy="8" r="1.2"/><circle cx="148" cy="12" r="1.5"/><circle cx="128" cy="30" r="1"/></g>
+<path d="M0 16 Q40 46 80 18 Q120 46 160 16" stroke="#7b5fc7" stroke-width="2" fill="none"/>
+<g><circle cx="10" cy="22" r="3.4" fill="#9b5de5"/><circle cx="22" cy="29" r="3.4" fill="#2bb673"/><circle cx="34" cy="33" r="3.4" fill="#f2c94c"/><circle cx="46" cy="33" r="3.4" fill="#9b5de5"/><circle cx="58" cy="30" r="3.4" fill="#2bb673"/><circle cx="70" cy="24" r="3.4" fill="#f2c94c"/>
+<circle cx="90" cy="24" r="3.4" fill="#9b5de5"/><circle cx="102" cy="30" r="3.4" fill="#2bb673"/><circle cx="114" cy="33" r="3.4" fill="#f2c94c"/><circle cx="126" cy="33" r="3.4" fill="#9b5de5"/><circle cx="138" cy="29" r="3.4" fill="#2bb673"/><circle cx="150" cy="22" r="3.4" fill="#f2c94c"/></g>
+<path d="M22 58 Q22 46 38 46 Q50 46 56 54 Q62 46 74 46 Q90 46 90 58 Q90 72 74 72 Q62 72 56 64 Q50 72 38 72 Q22 72 22 58z" fill="#9b5de5"/>
+<path d="M22 58 Q22 46 38 46 Q50 46 56 54 L56 64 Q50 72 38 72 Q22 72 22 58z" fill="#2bb673"/>
+<ellipse cx="40" cy="58" rx="8" ry="5" fill="#3b2a5e"/><ellipse cx="72" cy="58" rx="8" ry="5" fill="#3b2a5e"/>
+<path d="M78 46 Q86 30 98 34 Q90 38 86 48z" fill="#f2c94c"/><path d="M82 46 Q96 26 108 38 Q96 38 88 50z" fill="#f28d4c"/>
+<g transform="translate(100 62) rotate(-18)"><rect x="0" y="-3" width="42" height="6" rx="2" fill="#e6b33a"/><path d="M42 -3 L58 -12 L58 12 L42 3z" fill="#f2c94c"/><rect x="10" y="-9" width="3" height="7" fill="#e6b33a"/><rect x="16" y="-9" width="3" height="7" fill="#e6b33a"/><rect x="22" y="-9" width="3" height="7" fill="#e6b33a"/><circle cx="-2" cy="0" r="3.5" fill="#e6b33a"/></g>
+<g fill="#f2c94c"><circle cx="130" cy="86" r="3"/><rect x="132" y="70" width="1.6" height="16"/><path d="M133.6 70 q6 2 6 8 q-2 -4 -6 -4z"/><circle cx="146" cy="80" r="2.6"/><rect x="147.6" y="66" width="1.4" height="14"/></g>
+<rect y="88" width="160" height="12" fill="#2a1d45"/>`,
+chi:`<rect width="160" height="100" fill="#cfe6f2"/>
+<g stroke="#ffffff" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M8 18 q14 -8 26 0 q6 4 0 8"/><path d="M14 32 q18 -6 30 0"/><path d="M118 14 q12 -6 24 0 q5 4 0 7"/></g>
+<g fill="#4c5964"><rect x="18" y="44" width="14" height="40"/><rect x="34" y="36" width="12" height="48"/><rect x="48" y="50" width="12" height="34"/>
+<rect x="64" y="20" width="10" height="64"/><rect x="74" y="12" width="10" height="72"/><rect x="69" y="30" width="10" height="54"/><rect x="72" y="2" width="1.6" height="12"/><rect x="80" y="0" width="1.6" height="14"/>
+<rect x="88" y="32" width="14" height="52"/><rect x="104" y="42" width="10" height="42"/><rect x="116" y="26" width="12" height="58"/><polygon points="116,26 122,18 128,26"/><rect x="130" y="48" width="16" height="36"/></g>
+<g fill="#f6e6a6" opacity=".85"><rect x="21" y="50" width="3" height="3"/><rect x="26" y="58" width="3" height="3"/><rect x="37" y="42" width="3" height="3"/><rect x="91" y="40" width="3" height="3"/><rect x="96" y="50" width="3" height="3"/><rect x="119" y="34" width="3" height="3"/><rect x="133" y="56" width="3" height="3"/><rect x="76" y="24" width="3" height="3"/></g>
+<rect y="80" width="160" height="20" fill="#3d8fc4"/><path d="M0 86 q8 -4 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 M0 94 q8 -4 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" stroke="#bfe0f5" stroke-width="1.4" fill="none"/>`,
+sea:`<rect width="160" height="100" fill="#d6ecf5"/>
+<path d="M60 70 L104 18 L150 70z" fill="#9fb3c2"/><path d="M95 29 L104 18 L114 30 L108 28 L103 33 L99 28z" fill="#ffffff"/>
+<path d="M0 74 Q30 58 60 70 Q90 60 160 72 L160 80 L0 80z" fill="#3f7d5a"/>
+<g fill="#2f6447"><path d="M10 74 l6 -16 l6 16z"/><path d="M22 74 l5 -13 l5 13z"/><path d="M128 74 l6 -15 l6 15z"/><path d="M140 75 l5 -12 l5 12z"/></g>
+<g stroke="#e2e6ea" stroke-width="2.2" stroke-linecap="round"><line x1="48" y1="80" x2="54" y2="34"/><line x1="66" y1="80" x2="58" y2="34"/><line x1="56" y1="80" x2="56" y2="34"/></g>
+<rect x="55" y="12" width="2" height="12" fill="#e2e6ea"/>
+<ellipse cx="56" cy="30" rx="14" ry="4.5" fill="#f2f4f6" stroke="#9aa7b1" stroke-width="1"/><ellipse cx="56" cy="25" rx="9" ry="3.2" fill="#e3e8ec"/><rect x="51" y="25" width="10" height="5" fill="#e3e8ec"/>
+<line x1="49" y1="56" x2="63" y2="56" stroke="#e2e6ea" stroke-width="2"/>
+<rect y="80" width="160" height="20" fill="#3f86b5"/><path d="M0 88 q8 -4 16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0 t16 0" stroke="#bfe0f5" stroke-width="1.4" fill="none"/>
+<g transform="translate(118 50)"><path d="M0 0 h22 l-3 24 h-16z" fill="#ffffff" stroke="#6b4f3a" stroke-width="1.6"/><rect x="2" y="7" width="18" height="7" fill="#2f6447"/><circle cx="11" cy="10.5" r="2.4" fill="#ffffff"/><rect x="-2" y="-4" width="26" height="5" rx="2" fill="#6b4f3a"/>
+<path d="M6 -8 q-3 -4 0 -8 M12 -8 q-3 -4 0 -8 M18 -8 q-3 -4 0 -8" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`,
+lv:`<rect width="160" height="100" fill="#1b1838"/>
+<g fill="#ffffff" opacity=".7"><circle cx="14" cy="12" r="1"/><circle cx="34" cy="22" r="1.2"/><circle cx="140" cy="10" r="1.2"/><circle cx="120" cy="24" r="1"/><circle cx="150" cy="34" r="1"/></g>
+<rect x="76" y="58" width="5" height="34" fill="#9aa3ad"/>
+<path d="M44 28 Q78 14 112 28 L108 60 Q78 66 48 60z" fill="#fdf6e3" stroke="#e23d6b" stroke-width="2.4"/>
+<g fill="#ffd23f"><circle cx="50" cy="31" r="1.8"/><circle cx="58" cy="27" r="1.8"/><circle cx="67" cy="24" r="1.8"/><circle cx="78" cy="23" r="1.8"/><circle cx="89" cy="24" r="1.8"/><circle cx="98" cy="27" r="1.8"/><circle cx="106" cy="31" r="1.8"/>
+<circle cx="52" cy="57" r="1.8"/><circle cx="62" cy="59" r="1.8"/><circle cx="72" cy="60" r="1.8"/><circle cx="84" cy="60" r="1.8"/><circle cx="94" cy="59" r="1.8"/><circle cx="104" cy="57" r="1.8"/></g>
+<text x="78" y="51" text-anchor="middle" font-family="Overpass, Arial, sans-serif" font-weight="900" font-size="15" fill="#e23d6b">VEGAS</text>
+<text x="78" y="37" text-anchor="middle" font-family="Overpass, Arial, sans-serif" font-weight="800" font-size="6.5" fill="#1d6fb8">WELCOME TO</text>
+<path d="M78 2 l3 7 l7.5 .5 l-5.8 4.8 l2 7.2 l-6.7 -4 l-6.7 4 l2 -7.2 l-5.8 -4.8 l7.5 -.5z" fill="#ffd23f" stroke="#e23d6b" stroke-width="1.4"/>
+<g transform="translate(18 70) rotate(-12)"><rect width="18" height="18" rx="3.5" fill="#ffffff"/><g fill="#e23d6b"><circle cx="5" cy="5" r="1.8"/><circle cx="13" cy="13" r="1.8"/><circle cx="9" cy="9" r="1.8"/></g></g>
+<g transform="translate(126 72) rotate(14)"><rect width="16" height="16" rx="3" fill="#ffffff"/><g fill="#1d6fb8"><circle cx="4.5" cy="4.5" r="1.6"/><circle cx="11.5" cy="11.5" r="1.6"/><circle cx="11.5" cy="4.5" r="1.6"/><circle cx="4.5" cy="11.5" r="1.6"/></g></g>
+<rect y="92" width="160" height="8" fill="#2b2650"/>`,
+la:`<rect width="160" height="100" fill="#ffe3b8"/><circle cx="34" cy="28" r="14" fill="#ff9248"/>
+<path d="M0 66 Q30 40 62 58 Q92 34 124 52 Q144 44 160 50 L160 100 L0 100z" fill="#c9a26b"/>
+<path d="M0 78 Q40 64 80 76 Q120 66 160 74 L160 100 L0 100z" fill="#8fb36a"/>
+<path d="M80 86 Q92 46 104 70 T128 56 Q138 40 150 82" stroke="#d6281c" stroke-width="3" fill="none"/>
+<g stroke="#9a7d5e" stroke-width="1.4"><line x1="92" y1="62" x2="92" y2="86"/><line x1="104" y1="70" x2="104" y2="86"/><line x1="116" y1="64" x2="116" y2="86"/><line x1="128" y1="56" x2="128" y2="86"/><line x1="140" y1="56" x2="140" y2="86"/></g>
+<rect x="124" y="46" width="10" height="6" rx="2" fill="#1d6fb8" transform="rotate(-30 129 49)"/>
+<g><path d="M20 94 Q18 70 24 50" stroke="#7a5532" stroke-width="3" fill="none"/>
+<g fill="#2f8f4e"><path d="M24 50 Q12 44 4 52 Q14 46 24 52z"/><path d="M24 50 Q36 42 46 48 Q36 46 24 52z"/><path d="M24 50 Q20 38 12 36 Q20 42 23 52z"/><path d="M24 50 Q30 38 40 38 Q30 44 25 52z"/></g></g>
+<g><path d="M58 96 Q56 76 61 60" stroke="#7a5532" stroke-width="2.6" fill="none"/>
+<g fill="#2f8f4e"><path d="M61 60 Q51 55 44 62 Q52 57 61 62z"/><path d="M61 60 Q71 53 79 58 Q71 57 61 62z"/><path d="M61 60 Q58 50 51 49 Q58 54 60 62z"/><path d="M61 60 Q66 50 74 50 Q66 55 62 62z"/></g></g>`
+};
+const art = (id, cls="") => `<svg class="cityart ${cls}" viewBox="0 0 160 100" role="img" aria-label="Illustration of ${STATIONS.find(s=>s.id===id).city}">${ART[id]}</svg>`;
+
+/* ================= STATE ================= */
+const KEY = "roadtrip-u1-v1";
+let S = load() || { nick:"", best:{}, rushBest:0 };
+function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null }catch(e){ return null } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)) }catch(e){} }
+const total = () => STATIONS.reduce((a,s)=>a+(S.best[s.id]?.score||0),0) + (S.rushBest||0);
+const maxOf = st => st.items.length*PER;
+const done = id => !!S.best[id];
+const unlocked = i => i===0 || done(STATIONS[i-1].id);
+
+/* ================= HELPERS ================= */
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm = s => String(s).toLowerCase().replace(/[’‘`´]/g,"'").replace(/[“”„]/g,'"').replace(/\s+/g," ").trim().replace(/[\s.?!,]+$/,"").replace(/é/g,"e");
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2200) }
+function medal(st){ const b=S.best[st.id]; if(!b) return ""; const p=(b.base??b.score)/maxOf(st); return p>=.8?"gold":p>=.5?"silver":"plain" }
+function hash(str){ let h=2166136261; for(const ch of str){ h^=ch.charCodeAt(0); h=Math.imul(h,16777619)>>>0 } return h }
+function checksum(nick,score){ const h=hash(nick+"|"+score+"|"+SALT); return h.toString(36).toUpperCase().padStart(7,"0").slice(-4).replace(/O/g,"Q").replace(/0/g,"Z") }
+function makeCode(){ const n=S.nick.toUpperCase(); const sc=total(); return `${n}-${sc}-${checksum(n,sc)}` }
+function parseCode(raw){
+  const c=raw.toUpperCase().replace(/[\s·]+/g,"").replace(/[–—]/g,"-");
+  const m=c.match(/^([A-Z0-9]{2,12})-(\d{1,6})-([A-Z0-9]{4})$/); if(!m) return null;
+  if(checksum(m[1],+m[2])!==m[3]) return {bad:true, nick:m[1]};
+  return {nick:m[1], score:+m[2]};
+}
+function odo(n){ return String(n).padStart(5,"0").split("").map(d=>`<span>${d}</span>`).join("") }
+function hintOf(ans){ return ans.split(" ").map(w=>w.split("").map((ch,i)=>i===0||/['’]/.test(ch)?ch:"_").join(" ")).join("   ") }
+
+/* ================= MAP ================= */
+const US = [[-124.7,48.4],[-124.1,46.2],[-124,43],[-124.2,40.4],[-122.4,37.8],[-120.6,34.6],[-118.4,34],[-117.1,32.5],[-114.7,32.7],[-111,31.3],[-108.2,31.3],[-106.5,31.8],
+[-104.5,29.6],[-103,29],[-101.4,29.8],[-99.5,27.5],[-97.4,25.9],[-97.4,27.8],[-94.7,29.4],[-93.8,29.7],[-91,29.2],[-89.4,29],[-89.6,30.2],[-88,30.4],[-85.3,29.7],
+[-84,30],[-82.7,28],[-81.8,26],[-81,25.1],[-80.4,25.2],[-80,26.7],[-80.6,28.5],[-81.4,30.7],[-80.9,32],[-79,33.5],[-77.9,34],[-75.5,35.3],[-76,37],[-75.2,38.5],
+[-74,40],[-73.9,40.6],[-72,41],[-70,41.6],[-70.6,42.6],[-70.2,43.7],[-69,44.2],[-67,44.8],[-67.8,47.1],[-69.2,47.4],[-70.6,45.5],[-74.7,45],[-76.4,44.2],[-79,43.3],
+[-79,42.8],[-82.5,41.7],[-83.5,42],[-82.5,43],[-82.4,45.3],[-84.5,46.5],[-88.4,48.3],[-89.6,48],[-95.2,49],[-123,49],[-124.7,48.4]];
+const P = (lon,lat) => [ (lon+126.5)*0.79*15 + 10, (50.2-lat)*15 + 14 ];
+function shield(n, cls){
+  return `<g class="shield-g ${cls||""}"><path class="shield-top" d="M-17,-17 Q0,-23 17,-17 L17,-9 L-17,-9 Z" fill="var(--shield-red)" stroke="#fff" stroke-width="2"/>
+  <path class="shield-body" d="M-17,-9 L17,-9 L17,2 Q17,15 0,22 Q-17,15 -17,2 Z" fill="var(--shield)" stroke="#fff" stroke-width="2"/>
+  <text y="10" text-anchor="middle" font-family="Overpass, Arial, sans-serif" font-weight="900" font-size="17" fill="#fff">${n}</text></g>`;
+}
+function mapSVG(){
+  const land = US.map(([a,b])=>P(a,b).map(v=>v.toFixed(1)).join(",")).join(" ");
+  const pts = STATIONS.map(s=>P(s.lon,s.lat));
+  let roads="";
+  for(let i=0;i<pts.length-1;i++){
+    const [x1,y1]=pts[i],[x2,y2]=pts[i+1]; const mx=(x1+x2)/2, my=(y1+y2)/2; const dx=x2-x1, dy=y2-y1;
+    const cx=mx-dy*.12, cy=my+dx*.12; const d=`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
+    const todo = done(STATIONS[i].id) ? "" : " todo";
+    roads += `<path class="road${todo}" id="leg-${i}" d="${d}"/><path class="lane${todo}" d="${d}"/>`;
+  }
+  const next = STATIONS.findIndex(s=>!done(s.id));
+  let pins="";
+  STATIONS.forEach((s,i)=>{
+    const [x,y]=pts[i]; const lk=!unlocked(i); const m=medal(s);
+    const lx = s.lab==="l" ? -26 : (s.lab==="b"||s.lab==="t") ? 0 : 26; const anchor = s.lab==="l"?"end":(s.lab==="b"||s.lab==="t")?"middle":"start"; const ly = s.lab==="b" ? 44 : s.lab==="t" ? -48 : 2;
+    const badge = done(s.id) ? `<circle cx="15" cy="-15" r="9" fill="var(--${m==="gold"?"gold":m==="silver"?"silver":"good"})" stroke="#fff" stroke-width="2"/><path d="M10.5,-15 l3,3 l6,-6" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/>` : "";
+    pins += `<g class="pin${lk?" locked":""}" data-i="${i}" transform="translate(${x},${y})" tabindex="${lk?-1:0}" role="button" aria-label="Station ${i+1}: ${s.city}, ${s.topic}${lk?" (locked)":""}">
+      ${i===next && !lk ? `<circle class="ring" r="20"/>` : ""}${shield(i+1)}${badge}
+      <text class="lbl" x="${lx}" y="${ly}" text-anchor="${anchor}">${s.city}</text>
+      <text class="sublbl" x="${lx}" y="${ly+16}" text-anchor="${anchor}">${s.topic}</text></g>`;
+  });
+  return `<svg class="map" viewBox="0 0 760 420" role="img" aria-label="Map of the USA with the stations of the road trip">
+    <rect class="sea" x="0" y="0" width="760" height="420" rx="10"/>
+    ${waves()}<polygon class="land" points="${land}"/>
+    ${roads}${mapFx()}<g class="car" id="car" transform="translate(-50 -50)"><g class="bob">
+      <ellipse cx="0" cy="1.5" rx="15" ry="8.5" fill="rgba(0,0,0,.22)"/>
+      <rect x="-14" y="-7.5" width="28" height="15" rx="4.5" fill="#f6c423" stroke="#2c3236" stroke-width="1.6"/>
+      <rect x="3" y="-6" width="6.5" height="12" rx="1.6" fill="#bfe0f5"/><rect x="-10" y="-6" width="5" height="12" rx="1.6" fill="#bfe0f5"/>
+      <rect x="-3.5" y="-3.5" width="5" height="7" rx="1" fill="#2c3236"/>
+      <circle cx="13.5" cy="-4.5" r="1.4" fill="#fff6c2"/><circle cx="13.5" cy="4.5" r="1.4" fill="#fff6c2"/></g></g>${pins}</svg>`;
+}
+
+/* ---------- the taxi on the map ---------- */
+function setCar(path, len){
+  const car=document.getElementById("car"); if(!car||!path) return;
+  const L=path.getTotalLength(); const p=path.getPointAtLength(len), q=path.getPointAtLength(Math.min(L,len+1.5)), o=path.getPointAtLength(Math.max(0,len-1.5));
+  const ang=Math.atan2(q.y-o.y,q.x-o.x)*180/Math.PI;
+  car.setAttribute("transform",`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)}) rotate(${ang.toFixed(1)}) scale(1.25)`);
+}
+function legEnds(path){ const L=path.getTotalLength(); const a=Math.min(34,L*.2); return [a, L-a] }
+function placeCar(){
+  const next=STATIONS.findIndex(s=>!done(s.id));
+  if(next===0){ const p=document.getElementById("leg-0"); if(p) setCar(p, legEnds(p)[0]); return }
+  const leg = next===-1 ? STATIONS.length-2 : next-1; const p=document.getElementById("leg-"+leg); if(p) setCar(p, legEnds(p)[1]);
+}
+function driveCar(leg, cb){ play("horn");
+  const path=document.getElementById("leg-"+leg); if(!path){ cb&&cb(); return }
+  const [a,b]=legEnds(path);
+  if(reduced){ setCar(path,b); cb&&cb(); return }
+  const dur=Math.min(3400, 1200+path.getTotalLength()*3.2); const t0=performance.now();
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  (function f(now){ const t=Math.min(1,(now-t0)/dur); setCar(path, a+(b-a)*ease(t)); if(t<1 && document.getElementById("car")) requestAnimationFrame(f); else cb&&cb() })(t0);
+}
+
+/* ================= WORLD, SCENES, FX ================= */
+const TOD=[
+ {a:"#f4c39f",b:"#d6ecf7",sx:"10%",sy:"62%",sun:"#ffd36b",glow:"rgba(255,190,110,.55)",stars:0,dim:1,veil:0,cloud:"#ffffff"},
+ {a:"#86c8f0",b:"#e3f4fc",sx:"22%",sy:"34%",sun:"#ffe066",glow:"rgba(255,230,120,.5)",stars:0,dim:1,veil:0,cloud:"#ffffff"},
+ {a:"#6cb8ec",b:"#d9f1fc",sx:"34%",sy:"20%",sun:"#ffe066",glow:"rgba(255,230,120,.5)",stars:0,dim:1,veil:0,cloud:"#ffffff"},
+ {a:"#5aaee8",b:"#cfeefc",sx:"50%",sy:"14%",sun:"#fff07a",glow:"rgba(255,240,140,.55)",stars:0,dim:1,veil:0,cloud:"#ffffff"},
+ {a:"#6aa6df",b:"#f2e8c8",sx:"64%",sy:"22%",sun:"#ffd95a",glow:"rgba(255,210,100,.55)",stars:0,dim:.98,veil:0,cloud:"#ffffff"},
+ {a:"#7b86c9",b:"#ffcf96",sx:"76%",sy:"40%",sun:"#ffb347",glow:"rgba(255,160,80,.6)",stars:0,dim:.9,veil:.08,cloud:"#ffe9d6"},
+ {a:"#4f427f",b:"#ff9566",sx:"88%",sy:"64%",sun:"#ff7a45",glow:"rgba(255,110,60,.6)",stars:.35,dim:.76,veil:.2,cloud:"#f3bfae"},
+ {a:"#0d1733",b:"#34407a",sx:"84%",sy:"16%",sun:"#f4f1de",glow:"rgba(240,240,220,.35)",stars:1,dim:.55,veil:.42,cloud:"#56608f"}
+];
+function applyTOD(){
+  const n=STATIONS.filter(s=>done(s.id)).length; const t=TOD[Math.min(n,7)]; const r=document.documentElement.style;
+  r.setProperty("--sky-a",t.a); r.setProperty("--sky-b",t.b); r.setProperty("--sun-x",t.sx); r.setProperty("--sun-y",t.sy);
+  r.setProperty("--sun-c",t.sun); r.setProperty("--sun-glow",t.glow); r.setProperty("--stars",t.stars); r.setProperty("--dim",t.dim);
+  r.setProperty("--veil",t.veil); r.setProperty("--cloud",t.cloud);
+}
+
+const ROADSIDE={ny:"city",chi:"city",mia:"palm",la:"palm",lv:"cactus",sea:"pine",nola:"tree",rush:"city",hero:"tree"};
+const FAR={ny:"skyline",chi:"skyline",mia:"sea",nola:"hills",sea:"mountains",lv:"mesa",la:"mesa",rush:"skyline",hero:"hills"};
+function farSVG(kind){
+  let g="";
+  for(let off=0; off<1600; off+=400){
+    if(kind==="skyline"){ const b=[[0,40,30],[34,22,50],[60,30,40],[94,18,62],[116,26,46],[146,34,34],[184,20,58],[208,30,42],[242,24,54],[270,36,30],[310,22,48],[336,30,38],[370,30,52]];
+      g+=b.map(([x,w,h])=>`<rect x="${x+off}" y="${80-h}" width="${w}" height="${h}"/>`).join("") }
+    else if(kind==="mountains") g+=`<path d="M${off} 80 L${off+60} 32 L${off+110} 60 L${off+180} 12 L${off+250} 56 L${off+310} 26 L${off+400} 80 Z"/><path d="M${off+168} 22 L${off+180} 12 L${off+193} 23 L${off+186} 21 L${off+180} 26 L${off+174} 21Z" fill="#fff"/>`;
+    else if(kind==="mesa") g+=`<path d="M${off} 80 L${off} 60 L${off+40} 60 L${off+52} 34 L${off+130} 34 L${off+142} 60 L${off+220} 60 L${off+232} 46 L${off+290} 46 L${off+300} 60 L${off+400} 60 L${off+400} 80 Z"/>`;
+    else if(kind==="sea") g+=`<path d="M${off} 80 L${off} 62 Q${off+50} 56 ${off+100} 62 T${off+200} 62 T${off+300} 62 T${off+400} 62 L${off+400} 80Z"/><path d="M${off+120} 62 l18 -26 l2 26z M${off+138} 40 l10 18 h-10z" fill="#fff"/>`;
+    else g+=`<path d="M${off} 80 L${off} 54 Q${off+70} 26 ${off+140} 50 Q${off+220} 70 ${off+290} 40 Q${off+350} 24 ${off+400} 54 L${off+400} 80 Z"/>`;
+  }
+  return `<svg viewBox="0 0 1600 80" preserveAspectRatio="none" class="farsvg ${kind}" aria-hidden="true">${g}</svg>`;
+}
+function midSVG(kind){
+  let g="";
+  for(let off=0; off<1600; off+=200){
+    const x=off+60;
+    if(kind==="city") g+=`<rect x="${x}" y="8" width="3" height="52" fill="#4a535a"/><path d="M${x+1.5} 10 q0 -6 12 -6" stroke="#4a535a" stroke-width="3" fill="none"/><ellipse cx="${x+15}" cy="6" rx="5" ry="2.5" fill="#f9d65c"/>`;
+    else if(kind==="palm") g+=`<path d="M${x} 60 Q${x-4} 34 ${x+4} 14" stroke="#8a5a32" stroke-width="4" fill="none"/><g fill="#2f9e55"><path d="M${x+4} 14 q-14 -6 -24 4 q12 -4 24 -1z"/><path d="M${x+4} 14 q14 -8 24 0 q-12 -2 -24 2z"/><path d="M${x+4} 14 q-6 -12 -16 -12 q10 4 15 13z"/><path d="M${x+4} 14 q6 -12 16 -10 q-10 4 -15 12z"/></g>`;
+    else if(kind==="cactus") g+=`<path d="M${x} 60 V22 q0 -6 6 -6 q6 0 6 6 V60 Z M${x} 40 h-6 q-4 0 -4 -4 V28 q0 -3 3 -3 q3 0 3 3 v6 h4 Z M${x+12} 36 h6 V24 q0 -3 3 -3 q3 0 3 3 v10 q0 6 -6 6 h-6 Z" fill="#3e8a4f"/>`;
+    else if(kind==="pine") g+=`<rect x="${x-2}" y="48" width="4" height="12" fill="#6b4f3a"/><path d="M${x} 6 L${x+12} 26 H${x-12} Z M${x} 18 L${x+15} 40 H${x-15} Z M${x} 30 L${x+18} 52 H${x-18} Z" fill="#2f6447"/>`;
+    else g+=`<rect x="${x-2}" y="36" width="4" height="24" fill="#6b4f3a"/><circle cx="${x}" cy="28" r="14" fill="#4f9a5a"/><circle cx="${x+9}" cy="34" r="9" fill="#5fae69"/>`;
+    g+=`<rect x="${off+150}" y="44" width="3" height="16" fill="#e8e2d0"/><rect x="${off+146}" y="44" width="11" height="5" fill="#d6281c"/>`;
+  }
+  return `<svg viewBox="0 0 1600 60" aria-hidden="true">${g}</svg>`;
+}
+const TAXI_SIDE=`<svg viewBox="0 0 124 62" aria-hidden="true">
+ <defs><pattern id="chk" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#fff"/><rect width="3" height="3" fill="#222"/><rect x="3" y="3" width="3" height="3" fill="#222"/></pattern></defs>
+ <ellipse cx="62" cy="57" rx="52" ry="4" fill="rgba(0,0,0,.25)"/>
+ <path d="M8 42 Q8 30 20 29 L34 28 L46 13 Q50 9 58 9 L84 9 Q92 9 96 15 L104 28 Q116 30 116 40 L116 46 Q116 48 114 48 L10 48 Q8 48 8 46 Z" fill="#f6c423" stroke="#2c3236" stroke-width="2"/>
+ <path d="M50 15 L42 27 L67 27 L67 14 Z" fill="#bfe0f5"/><path d="M71 14 L71 27 L98 27 L91 16 Q89 14 86 14 Z" fill="#bfe0f5"/>
+ <circle cx="80" cy="22" r="4.5" fill="#2c3236"/><path d="M74 27 q6 -6 12 0" fill="#2c3236"/>
+ <rect x="12" y="33" width="100" height="5" fill="url(#chk)"/>
+ <rect x="57" y="2" width="22" height="8" rx="2" fill="#fff" stroke="#2c3236" stroke-width="1.5"/>
+ <text x="68" y="8.6" text-anchor="middle" font-family="Overpass, Arial, sans-serif" font-weight="900" font-size="6.5" fill="#2c3236">TAXI</text>
+ <circle cx="113" cy="38" r="2.6" fill="#fff6c2"/><rect x="8" y="35" width="3" height="6" rx="1" fill="#d6281c"/>
+ <g class="wheel"><circle cx="32" cy="48" r="9" fill="#2c3236"/><circle cx="32" cy="48" r="4.2" fill="#cfd6db"/><path d="M32 41 V55 M25 48 H39" stroke="#8a959c" stroke-width="1.6"/></g>
+ <g class="wheel"><circle cx="94" cy="48" r="9" fill="#2c3236"/><circle cx="94" cy="48" r="4.2" fill="#cfd6db"/><path d="M94 41 V55 M87 48 H101" stroke="#8a959c" stroke-width="1.6"/></g>
+</svg>`;
+function billLive(st){ return `<div class="board">${art(st.id)}<div class="lab" id="blab"></div></div><div class="legs"><i></i><i></i></div>` }
+function billStatic(id,label){ return `<div class="board">${art(id)}<div class="lab">${esc(label)}</div></div><div class="legs"><i></i><i></i></div>` }
+function strip(kind, o={}){
+  return `<div class="strip${o.tall?" tall":""}" id="strip" style="--prog:${o.prog||0};--spd:${o.spd||9}s" aria-hidden="true">
+   <div class="s-sky"></div><div class="stars"></div><div class="s-sun"></div>
+   <div class="cloud"></div><div class="cloud sc2"></div>
+   <div class="s-far">${farSVG(FAR[kind]||"hills")}</div>
+   ${o.bill?`<div class="s-bill">${o.bill}</div>`:""}
+   <div class="s-mid">${midSVG(ROADSIDE[kind]||"tree")}</div>
+   <div class="s-road"></div>
+   <div class="s-car" id="scar"><div class="body">${TAXI_SIDE}</div></div>
+   ${o.fuel?`<div class="s-fuel" id="sfuel"></div>`:""}
+  </div>`;
+}
+function setProg(v){ const s=$("#strip"); if(s) s.style.setProperty("--prog", v) }
+function shakeCar(){
+  const c=$("#scar"), s=$("#strip"); if(!c||!s) return;
+  c.classList.remove("shake"); void c.offsetWidth; c.classList.add("shake");
+  if(reduced) return;
+  const p=document.createElement("div"); p.className="puff"; p.style.left=(c.offsetLeft+2)+"px"; s.appendChild(p); setTimeout(()=>p.remove(),1150);
+}
+function carSparkle(n){ const c=$("#scar"); if(!c) return; setTimeout(()=>{ const r=c.getBoundingClientRect(); burst(r.left+r.width*.55, r.top+r.height*.2, n, .8) }, 420) }
+
+/* ---------- locals (avatars) ---------- */
+const LOCALS={
+ ny:{name:"Max",line:"Hi, I’m Max! My family moved to New York last summer. Can you help me with some words?",skin:"#f1c7a3",hair:"#6b4423",style:"short",shirt:"#2f6db5",bg:"#dcecf9"},
+ mia:{name:"José",line:"¡Hola! I’m José from Little Havana. I ask a lot of questions – let’s practise them!",skin:"#c99068",hair:"#2b2b2b",style:"short",shirt:"#e2574c",bg:"#ffe3cc"},
+ nola:{name:"Ashley",line:"Hey, I’m Ashley! Welcome to New Orleans. It’s Mardi Gras – let’s talk about it in the passive!",skin:"#8d5a3b",hair:"#2a1a12",style:"curly",shirt:"#9b5de5",bg:"#ece2fb"},
+ chi:{name:"Mia",line:"Hi! I’m Mia. I come from Bavaria, but now I live in Chicago. Let’s learn some history!",skin:"#f3d2b5",hair:"#c8913a",style:"long",shirt:"#2bb673",bg:"#dff4e8"},
+ sea:{name:"Tyler",line:"Hi, I’m Tyler! Want a Seattle-style hot dog? First, let’s build some word families.",skin:"#e8b48f",hair:"#a0522d",style:"short",shirt:"#1f6f78",bg:"#dcefef"},
+ lv:{name:"Brad",line:"Thank you very much! I’m Brad, an Elvis double. Help me find the right sentences for my show!",skin:"#efc19c",hair:"#1a1a1a",style:"quiff",shirt:"#ffffff",bg:"#fde2ea",glasses:true},
+ la:{name:"Ella",line:"You made it to L.A.! I’m Ella, your cousin. Read Finn’s blog and answer my questions.",skin:"#d9a27c",hair:"#4a2b1a",style:"long",shirt:"#ff8a3d",bg:"#ffe8d1"}
+};
+function avatar(L){
+  const H={
+    short:`<path d="M19 27 Q19 13 32 13 Q45 13 45 27 Q41 19 32 19 Q23 19 19 27Z" fill="${L.hair}"/>`,
+    long:`<path d="M18 30 Q16 46 22 48 L22 28Z M46 30 Q48 46 42 48 L42 28Z" fill="${L.hair}"/><path d="M19 28 Q18 12 32 12 Q46 12 45 28 Q40 18 32 19 Q24 18 19 28Z" fill="${L.hair}"/>`,
+    curly:`<g fill="${L.hair}"><circle cx="22" cy="20" r="6"/><circle cx="29" cy="15" r="6.5"/><circle cx="37" cy="15" r="6.5"/><circle cx="43" cy="21" r="6"/><circle cx="19" cy="28" r="5"/><circle cx="45" cy="28" r="5"/></g>`,
+    quiff:`<path d="M19 26 Q18 10 34 8 Q47 8 46 19 Q40 14 34 17 Q26 16 19 26Z" fill="${L.hair}"/><path d="M19 26 L19 34 L22 33 L22 24Z M45 24 L45 34 L42 33 L42 22Z" fill="${L.hair}"/>`
+  };
+  const glasses = L.glasses ? `<rect x="22.5" y="25.5" width="8.5" height="5.5" rx="2" fill="#222"/><rect x="33" y="25.5" width="8.5" height="5.5" rx="2" fill="#222"/><rect x="30" y="27" width="4" height="1.6" fill="#222"/>` : "";
+  return `<svg class="ava" viewBox="0 0 64 64" aria-hidden="true"><defs><clipPath id="avc"><circle cx="32" cy="32" r="30"/></clipPath></defs>
+   <circle cx="32" cy="32" r="30" fill="${L.bg}" stroke="#2c3236" stroke-width="2"/>
+   <g clip-path="url(#avc)"><path d="M8 68 Q8 45 32 45 Q56 45 56 68Z" fill="${L.shirt}" stroke="#2c3236" stroke-width="1.2"/>
+   <rect x="27" y="37" width="10" height="10" rx="3" fill="${L.skin}"/><circle cx="32" cy="29" r="13" fill="${L.skin}"/>${H[L.style]}
+   <circle cx="27.5" cy="29.5" r="1.7" fill="#222"/><circle cx="36.5" cy="29.5" r="1.7" fill="#222"/>${glasses}
+   <circle cx="24.5" cy="34" r="2" fill="#f08a7a" opacity=".45"/><circle cx="39.5" cy="34" r="2" fill="#f08a7a" opacity=".45"/>
+   <path d="M27.5 35.5 q4.5 4 9 0" stroke="#222" stroke-width="1.7" fill="none" stroke-linecap="round"/></g></svg>`;
+}
+
+/* ---------- map decorations ---------- */
+function waves(){
+  const w=[[18,110],[30,190],[14,262],[22,330],[712,252],[728,320],[700,178],[418,404],[520,408],[300,410],[160,400]];
+  return w.map(([x,y],i)=>`<path class="wave" style="animation-delay:-${(i*0.7).toFixed(1)}s" d="M${x} ${y} q6 -4 12 0 t12 0"/>`).join("");
+}
+function mapFx(){
+  const cl=(y,dur,del,sc)=>`<g class="mcloud" style="animation-duration:${dur}s;animation-delay:-${del}s"><path transform="translate(0 ${y}) scale(${sc})" d="M0 20 q0 -14 16 -14 q4 -12 20 -10 q12 -8 22 6 q14 0 14 18 z" fill="var(--cloud)" opacity=".88"/></g>`;
+  return `<rect class="veil" x="0" y="0" width="760" height="420" rx="10"/>
+   ${cl(40,80,10,1.1)}${cl(150,110,60,.85)}${cl(270,95,30,1)}
+   <g class="plane"><path d="M-60 2 H-6" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 6" opacity=".8"/>
+     <path d="M0 0 L22 0 Q28 1 22 4 L0 4 Z M8 0 L4 -9 L10 -9 L15 0Z M8 4 L4 13 L10 13 L15 4Z M1 0 L-3 -5 L1 -5 L4 0Z" fill="#ffffff" stroke="#2c3236" stroke-width=".8"/></g>`;
+}
+
+/* ---------- confetti & fireworks ---------- */
+const FX={c:null,x:null,p:[],run:false};
+const CONF=["#f2b705","#d6281c","#1c4d8f","#0c6a3c","#ff8a3d","#9b5de5","#3fcf7b","#ffffff"];
+function fxInit(){
+  FX.c=document.getElementById("fx"); if(!FX.c) return; FX.x=FX.c.getContext("2d");
+  const rs=()=>{ const d=window.devicePixelRatio||1; FX.c.width=innerWidth*d; FX.c.height=innerHeight*d; FX.x.setTransform(d,0,0,d,0,0) };
+  rs(); addEventListener("resize",rs);
+}
+function burst(x,y,n=40,spread=1,up=1){
+  if(reduced||!FX.x) return;
+  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, v=(2+Math.random()*5)*spread;
+    FX.p.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-3*up,life:60+Math.random()*45,age:0,s:4+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.4,col:CONF[(Math.random()*CONF.length)|0],shape:Math.random()<.5}) }
+  if(!FX.run){ FX.run=true; requestAnimationFrame(fxTick) }
+}
+function fxTick(){
+  const x=FX.x; x.clearRect(0,0,innerWidth,innerHeight);
+  FX.p=FX.p.filter(p=>p.age<p.life);
+  for(const p of FX.p){ p.age++; p.vy+=.18; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+    x.save(); x.globalAlpha=Math.max(0,1-p.age/p.life); x.translate(p.x,p.y); x.rotate(p.r); x.fillStyle=p.col;
+    if(p.shape) x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); else { x.beginPath(); x.arc(0,0,p.s/2.4,0,7); x.fill() } x.restore() }
+  if(FX.p.length) requestAnimationFrame(fxTick); else { FX.run=false; x.clearRect(0,0,innerWidth,innerHeight) }
+}
+function rain(n=150){ if(reduced) return; for(let i=0;i<n;i++) setTimeout(()=>burst(Math.random()*innerWidth, -10, 1, .5, -.4), i*10) }
+function fireworks(k=7){ if(reduced) return; for(let i=0;i<k;i++) setTimeout(()=>{ burst(innerWidth*(.15+.7*Math.random()), innerHeight*(.15+.3*Math.random()), 80, 1.4, 0); play("pop") }, i*480) }
+
+/* ---------- sound (off by default) ---------- */
+let AC=null; let SOUND=false; try{ SOUND=localStorage.getItem("rt-sound")==="1" }catch(e){}
+function tone(f,d,type="sine",vol=.14,when=0){
+  const t=AC.currentTime+when; const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g).connect(AC.destination); o.start(t); o.stop(t+d+.05);
+}
+const SFX={
+  ok(){ tone(660,.12,"triangle"); tone(990,.2,"triangle",.14,.09) },
+  bad(){ tone(170,.28,"sawtooth",.07); tone(120,.3,"sawtooth",.06,.08) },
+  horn(){ tone(392,.18,"square",.05); tone(392,.25,"square",.05,.24) },
+  stamp(){ tone(90,.18,"square",.12) },
+  pop(){ tone(1200+Math.random()*600,.15,"triangle",.07) },
+  fanfare(){ [523,659,784,1047].forEach((f,i)=>tone(f,.25,"triangle",.13,i*.13)) }
+};
+function play(n){ if(!SOUND) return; try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==="suspended") AC.resume(); SFX[n]&&SFX[n]() }catch(e){} }
+function sndBtn(){
+  const b=document.getElementById("snd"); if(!b) return;
+  const on=`<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+  const off=`<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  const draw=()=>{ b.innerHTML=SOUND?on:off; b.classList.toggle("on",SOUND); b.setAttribute("aria-pressed",SOUND?"true":"false") };
+  draw(); b.onclick=()=>{ SOUND=!SOUND; try{ localStorage.setItem("rt-sound",SOUND?"1":"0") }catch(e){} draw(); if(SOUND) play("ok"); toast(SOUND?"Sound on":"Sound off") };
+}
+
+/* ================= VIEWS ================= */
+let view = "start";
+function go(v, arg){ view=v; applyTOD(); window.scrollTo({top:0, behavior: reduced?"auto":"smooth"});
+  if(v==="start") renderStart(); else if(v==="map") renderMap(arg); else if(v==="station") startStation(arg);
+  else if(v==="rush") renderRushIntro(); else if(v==="code") renderCode(); }
+
+function footer(){ return `<footer>Red Line 4 · Unit 1 “New places, new faces” · <a href="#teacher">Teacher</a> · <a href="#board">Leaderboard</a></footer>` }
+
+function renderStart(){
+  app.innerHTML = `
+  <div class="sign"><div class="exit-tab">UNIT 1</div>
+    <div class="eyebrow">Interstate English · Class 8 · New places, new faces</div>
+    <h1>Road Trip USA</h1>
+    <div class="arrow-line"><span>New York</span><span>Miami</span><span>New Orleans</span><span>Chicago</span><span>Seattle</span><span>Las Vegas</span><span>L.A.</span></div>
+  </div>
+  ${strip("hero",{prog:.36, spd:6, tall:true, bill:billStatic("la","LOS ANGELES · 2,800 mi")})}
+  <div class="hero">
+    <div class="postcard">
+      <div class="pc-stamp">${art("la")}</div>
+      <p>Hi cousin!<br>Come and visit me in <b>Los Angeles</b> this summer! There’s just one problem: you have to drive here yourself.
+      Pick up the yellow taxi in New York and cross the USA. In every city a local will test your English.
+      Right answers = miles. Mistakes cost fuel – so drive carefully!</p>
+      <p class="from">See you soon, Ella</p>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+      <div class="field"><label for="nick">Your nickname</label>
+        <input type="text" id="nick" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. LENA8B" value="${esc(S.nick)}">
+        <span class="muted" style="font-size:14px">Letters and numbers only, 2–12 characters. Your teacher will see it on the leaderboard.</span></div>
+      <button class="btn" id="startbtn">${total()>0?"Continue your trip":"Start the engine"}</button>
+      ${total()>0?`<span class="muted" style="font-size:15px">You have already driven <b>${total()}</b> miles.</span>`:""}
+    </div>
+  </div>
+  <div class="card"><h3 style="font-size:22px;margin-bottom:12px">How to collect miles</h3>
+    <div class="rules">
+      <div class="rule"><b>+100</b><span>Correct on your first try.</span></div>
+      <div class="rule"><b>+50</b><span>Correct on your second try – or after you used a hint.</span></div>
+      <div class="rule"><b>Fuel</b><span>6 cans in every city. Each mistake costs one. Every can left = <b>+25</b> bonus miles.</span></div>
+    </div>
+    <p class="muted" style="margin:14px 0 0">7 cities with 16 questions each: vocabulary, the passive (G1), negative questions (G2), mixed grammar and reading. Get 80% for a gold stamp in your passport. The sky changes as you drive west – arrive in L.A. at night! Plus the <b>Taxi Rush</b> word race for bonus miles. At the end you get a code for the class leaderboard.</p>
+  </div>${footer()}`;
+  const inp=$("#nick");
+  inp.addEventListener("input",()=>{ inp.value=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,"") });
+  const startGo=()=>{ const v=inp.value.trim(); if(v.length<2){ toast("Please type a nickname (2–12 letters or numbers)."); inp.focus(); return } S.nick=v; save(); play("horn"); go("map") };
+  $("#startbtn").onclick=startGo; inp.addEventListener("keydown",e=>{ if(e.key==="Enter") startGo() });
+}
+
+function renderMap(arg){
+  const all = STATIONS.every(s=>done(s.id));
+  app.innerHTML = `
+  <div class="dash">
+    <div class="odo"><small>ODOMETER · MILES</small><div class="digits">${odo(total())}</div></div>
+    <div><div class="who">Driver: ${esc(S.nick)}</div><div class="muted" style="font-size:15px">${all?"You visited every city! Get your code for the leaderboard.":"Tap the next shield on the map to drive on."}</div></div>
+    <div class="row"><button class="btn blue small" id="rushbtn">Taxi Rush ${S.rushBest?`· best ${S.rushBest}`:""}</button><button class="btn small" id="codebtn">My code</button></div>
+  </div>
+  <div class="card mapcard">${mapSVG()}
+    <div class="legend"><span>Blue shield = open station</span><span>Grey = still locked</span><span>Tick = done (gold from 80%)</span></div></div>
+  <div class="stops">${STATIONS.map((s,i)=>{ const b=S.best[s.id];
+    return `<button class="stop" data-i="${i}" ${unlocked(i)?"":"disabled"}><span class="thumb">${art(s.id)}</span>
+     <span style="min-width:0"><span class="t">${i+1} · ${s.city}</span><br><span class="s">${s.topic}</span></span>
+     <span class="sc">${b?`${b.score} mi`:unlocked(i)?"open":"locked"}</span></button>`}).join("")}</div>
+  <div class="card"><h3 style="font-size:20px;margin-bottom:10px">Your passport</h3>
+    <div class="passport">${STATIONS.map(s=>{ const m=medal(s); return `<div class="stamp ${m}"><span class="big">${m?s.city.toUpperCase():"·"}</span>${m?`<span>${m==="gold"?"GOLD":m==="silver"?"SILVER":"VISITED"}</span>`:`<span>${s.city}</span>`}</div>` }).join("")}</div>
+  </div>
+  <div class="row" style="justify-content:space-between"><button class="btn alt small" id="nickbtn">Change nickname</button><button class="btn alt small" id="lbbtn">Class leaderboard</button></div>
+  ${footer()}`;
+  app.querySelectorAll(".pin:not(.locked), .stop:not([disabled])").forEach(el=>{
+    const open=()=>go("station", +el.dataset.i); el.addEventListener("click",open);
+    el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open() } }); });
+  app.querySelectorAll(".pin.locked").forEach(el=>el.addEventListener("click",()=>toast("Finish the station before first!")));
+  $("#rushbtn").onclick=()=>go("rush"); $("#codebtn").onclick=()=>go("code"); $("#nickbtn").onclick=()=>go("start");
+  $("#lbbtn").onclick=()=>{ location.hash="board" };
+  if(S.drive!=null){ const leg=S.drive; S.drive=null; save();
+    const nx=STATIONS[leg+1]; if(nx) toast(`On the road to ${nx.city} …`);
+    driveCar(leg, ()=>{ if(arg && arg.autoOpen!=null) setTimeout(()=>{ if(view==="map") go("station", arg.autoOpen) }, 650) });
+  } else placeCar();
+}
+
+/* ---------- Station play ---------- */
+let R = null;
+function startStation(i){
+  const st=STATIONS[i];
+  R = { i, st, k:0, score:0, fuel:6, marks:[], finished:false, items: st.items.map(it=> it.t==="choice" ? {...it, order: shuffle(it.o.map((_,j)=>j))} : {...it}) };
+  renderShell(); renderItem();
+}
+function renderShell(){
+  const {st,i}=R;
+  app.innerHTML = `<div class="sign" style="padding:14px 20px"><div class="exit-tab">EXIT ${i+1}</div>
+    <div class="eyebrow">${st.city}, ${st.state} · ${esc(st.sub)}</div><h2>${st.topic}</h2></div>
+    ${strip(st.id,{fuel:true,bill:billLive(st)})}
+    <div class="qhead"><div class="dots" id="dots"></div>
+      <div class="row"><span class="odo" style="min-width:0;padding:6px 12px"><small>THIS STATION</small><span class="digits" id="sodo" style="font-size:24px">${odo(0)}</span></span>
+      <button class="btn alt small" id="quit">Back to map</button></div></div>
+    <div id="qarea" class="qarea"></div>${footer()}`;
+  $("#quit").onclick=()=>{ if(R.finished || confirmQuit()) go("map") };
+  hud();
+}
+function hud(){
+  const N=R.items.length; const answered=R.marks.filter(Boolean).length;
+  const d=$("#dots"); if(d) d.innerHTML=R.items.map((_,j)=>`<span class="dot ${R.marks[j]||""} ${j===R.k&&!R.finished?"now":""}"></span>`).join("");
+  const o=$("#sodo"); if(o) o.innerHTML=odo(R.score);
+  const f=$("#sfuel"); if(f) f.innerHTML=`<span>FUEL</span>${[0,1,2,3,4,5].map(j=>`<i class="${j<R.fuel?(R.fuel<=2?"low":"on"):""}"></i>`).join("")}`;
+  const b=$("#blab"); if(b) b.textContent = answered<N ? `${R.st.city.toUpperCase()} · ${N-answered} mi` : `WELCOME TO ${R.st.city.toUpperCase()}!`;
+  setProg(Math.min(1, answered/N));
+}
+function renderItem(){
+  const {st,k}=R; const it=R.items[k];
+  it.tries=0; it.hinted=false; it.closed=false;
+  const gapq = it.q.replace("___", `<span class="gap" id="gap">&nbsp;</span>`);
+  let body="";
+  if(it.t==="type"){
+    body = `<div class="qtext">${gapq}</div>${it.clue?`<div><span class="clue">${esc(it.clue)}</span></div>`:""}
+      <input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer">
+      <div class="row"><button class="btn" id="check">Check</button><button class="btn alt small" id="hint">Hint (max. +50)</button></div>`;
+  } else if(it.t==="choice"){
+    body = `<div class="qtext">${gapq}</div><div class="opts">${it.order.map(j=>`<button class="opt" data-j="${j}">${it.o[j]}</button>`).join("")}</div>
+      <div class="row"><button class="btn alt small" id="hint">Hint: remove one wrong answer (max. +50)</button></div>`;
+  } else {
+    body = `<div class="qtext">${it.q}</div><div class="tfn">${["True","False","Not in the text"].map((l,j)=>`<button class="opt" data-j="${j}">${l}</button>`).join("")}</div>`;
+  }
+  const L=LOCALS[st.id];
+  const intro = k===0 ? `<div class="local">${avatar(L)}<div class="bubble"><b class="nm">${L.name}</b><p class="hand">${esc(L.line)}</p><p class="muted" style="font-size:15px">${esc(st.intro)}</p></div></div>` : "";
+  const textBlock = st.text ? `<details class="read" open><summary>The text</summary><div class="textbox">${st.text}</div></details>` : "";
+  $("#qarea").innerHTML = `${intro}${textBlock}<div class="card qcard"><div class="qnum">Question ${k+1} of ${R.items.length}</div>${body}<div id="fb" aria-live="polite"></div><div id="nextrow"></div></div>`;
+  hud();
+  if(it.t==="type"){
+    const a=$("#ans"); a.focus({preventScroll:true});
+    $("#check").onclick=()=>checkType(); a.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); it.closed? next() : checkType() } });
+    $("#hint").onclick=()=>{ it.hinted=true; $("#hint").disabled=true; fb("try","Hint", `<span style="font-family:var(--f-sign);font-size:22px;letter-spacing:.05em">${esc(hintOf(it.a[0]))}</span>`); a.focus() };
+  } else {
+    app.querySelectorAll(".opt").forEach(b=>b.onclick=()=>checkChoice(b));
+    const h=$("#hint"); if(h) h.onclick=()=>{ it.hinted=true; h.disabled=true; const wrong=[...app.querySelectorAll(".opt:not([disabled])")].filter(b=>+b.dataset.j!==it.c); if(wrong.length){ const w=wrong[Math.floor(Math.random()*wrong.length)]; w.disabled=true; w.classList.add("wrong") } };
+  }
+}
+let quitArmed=0;
+function confirmQuit(){ const b=$("#quit"); if(Date.now()-quitArmed<3000) return true; quitArmed=Date.now(); b.textContent="Tap again to leave (points are lost)"; return false }
+function fb(cls,head,html){ $("#fb").innerHTML=`<div class="fb ${cls}"><b class="h">${head}</b>${html}</div>` }
+function mistake(){
+  const before=R.fuel; R.fuel=Math.max(0,R.fuel-1); hud(); play("bad"); shakeCar();
+  if(before>0 && R.fuel===0) toast("Out of fuel – no fuel bonus in this city!");
+  else if(R.fuel===2) toast("Fuel is getting low!");
+}
+function award(correct){
+  const it=R.items[R.k]; it.closed=true;
+  let pts=0;
+  if(correct){ pts = (it.tries===0 && !it.hinted) ? PER : HALF; R.marks[R.k] = pts===PER ? "ok" : "half" } else { R.marks[R.k]="no" }
+  R.score += pts; hud();
+  if(correct){ play("ok"); carSparkle(pts===PER?34:16) }
+  $("#nextrow").innerHTML = `<button class="btn" id="next">${R.k<R.items.length-1?"Next question →":"Arrive in "+R.st.city}</button>`;
+  $("#next").onclick=next; $("#next").focus({preventScroll:true});
+  const h=$("#hint"); if(h) h.disabled=true;
+  return pts;
+}
+function checkType(){
+  const it=R.items[R.k]; if(it.closed) return; const a=$("#ans"); const v=a.value;
+  if(!v.trim()){ toast("Type an answer first."); return }
+  const ok = it.a.some(x=>norm(x)===norm(v)); const g=$("#gap"); const sol=it.a[0].replace(/'/g,"’");
+  if(ok){ const p=award(true); if(g) g.textContent=sol; a.disabled=true; $("#check").disabled=true; fb("ok", p===PER?"Great! +100 miles":"Correct! +50 miles", esc(it.ex)) }
+  else if(it.tries===0){ it.tries=1; mistake(); fb("try","Not quite – try again (max. +50)", `Check the form and the spelling. Clue: ${esc(it.clue||"")}`); a.select() }
+  else { mistake(); award(false); if(g) g.textContent=sol; a.disabled=true; $("#check").disabled=true; fb("no","The answer is: "+esc(sol), esc(it.ex)) }
+}
+function checkChoice(btn){
+  const it=R.items[R.k]; if(it.closed) return; const j=+btn.dataset.j;
+  const labels = it.t==="tfn" ? ["True","False","Not in the text"] : it.o;
+  if(j===it.c){ btn.classList.add("right"); const p=award(true); app.querySelectorAll(".opt").forEach(b=>b.disabled=true);
+    const g=$("#gap"); if(it.t==="choice" && g) g.textContent=it.o[it.c].replace(/\?$/,"");
+    fb("ok", p===PER?"Great! +100 miles":"Correct! +50 miles", esc(it.ex)) }
+  else { btn.classList.add("wrong"); btn.disabled=true; mistake();
+    const left=[...app.querySelectorAll(".opt:not([disabled])")];
+    if(it.tries===0 && left.length>1){ it.tries=1; fb("try","Not quite – try again (max. +50)", it.t==="tfn"?"Find the sentence in the text first.":"Look carefully at the verb form.") }
+    else { award(false); app.querySelectorAll(".opt").forEach(b=>{ b.disabled=true; if(+b.dataset.j===it.c) b.classList.add("right") });
+      fb("no","Correct answer: "+esc(labels[it.c]), esc(it.ex)) } }
+}
+function next(){ if(R.k<R.items.length-1){ R.k++; renderItem(); window.scrollTo({top:0, behavior:reduced?"auto":"smooth"}) } else finishStation() }
+function finishStation(){
+  const {st,score,i}=R; R.finished=true;
+  const bonus=R.fuel*25, tot=score+bonus;
+  const prev=S.best[st.id]; const prevTot=prev?.score; const firstTime = prev===undefined; const newBest = firstTime || tot>prevTot;
+  if(newBest){ S.best[st.id]={score:tot, base:score}; if(firstTime && i<STATIONS.length-1) S.drive=i; save() }
+  const pct=Math.round(score/maxOf(st)*100); const m=pct>=80?"gold":pct>=50?"silver":"plain";
+  const nxt=STATIONS[i+1];
+  hud(); applyTOD(); $("#quit").textContent="Map";
+  play("stamp");
+  if(m==="gold") setTimeout(()=>{ rain(170); play("fanfare") }, 500); else setTimeout(()=>burst(innerWidth/2, innerHeight*.35, 50), 400);
+  $("#qarea").innerHTML = `<div class="local">${avatar(LOCALS[st.id])}<div class="bubble"><b class="nm">${LOCALS[st.id].name}</b><p class="hand">${pct>=80?"Wow, your English is fantastic! Have a safe trip!":pct>=50?"Well done! Come back and get the gold stamp!":"Thanks for visiting! Practise a bit more and come back."}</p></div></div>
+  <div class="card cert">
+    <div class="stamp ${m} ${reduced?"":"pop"}" style="width:130px;height:130px;font-size:15px"><span class="big" style="font-size:19px">${st.city.toUpperCase()}</span><span>${m==="gold"?"GOLD":m==="silver"?"SILVER":"VISITED"}</span></div>
+    <h2 style="font-size:30px">${pct>=80?"Fantastic driving!":pct>=50?"Good job!":"You made it!"}</h2>
+    <div class="board" style="width:min(420px,100%)">
+      <div class="brow" style="grid-template-columns:1fr auto"><span>Questions (${pct}%)</span><span class="pt" style="font-size:20px">${score}</span></div>
+      <div class="brow" style="grid-template-columns:1fr auto"><span>Fuel bonus: ${R.fuel} × 25</span><span class="pt" style="font-size:20px">+${bonus}</span></div>
+      <div class="brow" style="grid-template-columns:1fr auto;border-color:var(--sign)"><b>Total</b><span class="pt" style="font-size:24px">${tot}</span></div>
+    </div>
+    <p style="margin:0" class="muted">${prev!==undefined?(newBest?"New personal best!":`Your best in ${st.city} is still ${prevTot}.`):""} ${pct<80?"Play again for a gold stamp – only your best result counts.":""}</p>
+    <div class="row" style="justify-content:center">
+      ${nxt?`<button class="btn" id="nextst">Drive on to ${nxt.city} →</button>`:`<button class="btn" id="tocode">Get my leaderboard code</button>`}
+      <button class="btn alt" id="again">Play again</button><button class="btn alt" id="tomap">Map</button></div>
+  </div>`;
+  if(nxt) $("#nextst").onclick=()=> S.drive!=null ? go("map",{autoOpen:i+1}) : go("station",i+1); else $("#tocode").onclick=()=>go("code");
+  $("#again").onclick=()=>go("station",i); $("#tomap").onclick=()=>go("map");
+}
+
+/* ---------- Taxi Rush ---------- */
+let RU=null;
+function renderRushIntro(){
+  app.innerHTML = `<div class="sign"><div class="exit-tab">BONUS</div><div class="eyebrow">Vocabulary race · German → English</div><h2>Taxi Rush</h2></div>
+  ${strip("rush",{prog:.1, spd:6})}
+  <div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <p style="margin:0;font-size:19px">You have <b>${RUSH_SEC} seconds</b>. Pick the English word for the German word as fast as you can. Every correct word pushes the taxi forward – a mistake sends it back!</p>
+    <p style="margin:0" class="muted">+20 miles for every correct word · +30 bonus for every 5 in a row · only your <b>best</b> Taxi Rush counts${S.rushBest?` (now: ${S.rushBest})`:""}.</p>
+    <div class="row"><button class="btn blue" id="go">Start the taxi</button><button class="btn alt" id="rback">Map</button></div>
+  </div>${footer()}`;
+  $("#go").onclick=startRush; $("#rback").onclick=()=>go("map");
+}
+function startRush(){
+  RU={score:0, streak:0, right:0, wrong:0, end:Date.now()+RUSH_SEC*1000, deck:shuffle(RUSH), p:0, missed:[]};
+  play("horn");
+  app.innerHTML = `<div class="sign" style="padding:14px 20px"><div class="exit-tab">BONUS</div><div class="eyebrow">Vocabulary race · German → English</div><h2>Taxi Rush</h2></div>
+  ${strip("rush",{prog:.1, spd:5})}
+  <div class="card" style="display:flex;flex-direction:column;gap:14px">
+    <div class="rushtop"><div class="timer" id="tm">${RUSH_SEC}</div><div class="odo" style="min-width:0"><small>MILES</small><span class="digits" id="rs">${odo(0)}</span></div></div>
+    <div class="bar"><i id="bar" style="width:100%"></i></div>
+    <div class="deword" id="de"></div><div class="rushgrid" id="rg"></div><div id="streak" class="muted" style="text-align:center;min-height:1.5em"></div></div>`;
+  rushQ(); RU.tick=setInterval(()=>{ const left=Math.max(0,RU.end-Date.now()); const tm=$("#tm"); if(!tm){ clearInterval(RU.tick); return } tm.textContent=Math.ceil(left/1000); $("#bar").style.width=(left/(RUSH_SEC*10))+"%"; if(left<=0) endRush() },200);
+}
+function rushQ(){
+  if(RU.p>=RU.deck.length){ RU.deck=shuffle(RUSH); RU.p=0 }
+  const [de,en]=RU.deck[RU.p++]; const others=shuffle(RUSH.filter(x=>x[1]!==en)).slice(0,3).map(x=>x[1]);
+  const opts=shuffle([en,...others]); RU.cur=en; RU.lock=false;
+  $("#de").textContent=de;
+  $("#rg").innerHTML=opts.map(o=>`<button class="opt" style="text-align:center">${esc(o)}</button>`).join("");
+  $("#rg").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(RU.lock) return; RU.lock=true; const ok=b.textContent===RU.cur;
+    if(ok){ RU.score+=20; RU.streak++; RU.right++; b.classList.add("right"); play("ok"); setProg(Math.min(.92,.1+RU.streak*.08));
+      if(RU.streak%5===0){ RU.score+=30; $("#streak").textContent=`${RU.streak} in a row! +30 bonus`; carSparkle(40) } else $("#streak").textContent=RU.streak>1?`${RU.streak} in a row`:"" }
+    else { RU.streak=0; RU.wrong++; b.classList.add("wrong"); play("bad"); shakeCar(); setProg(.1); RU.missed.push([$("#de").textContent,RU.cur]); $("#rg").querySelectorAll(".opt").forEach(x=>{ if(x.textContent===RU.cur) x.classList.add("right") }); $("#streak").textContent="" }
+    $("#rs").innerHTML=odo(RU.score);
+    setTimeout(()=>{ if(Date.now()<RU.end && $("#rg")) rushQ() }, ok?250:900);
+  });
+}
+function endRush(){
+  clearInterval(RU.tick); const nb = RU.score>(S.rushBest||0); if(nb){ S.rushBest=RU.score; save() }
+  const miss=[...new Map(RU.missed.map(m=>[m[1],m])).values()];
+  app.innerHTML = `<div class="sign"><div class="exit-tab">BONUS</div><div class="eyebrow">Time is up!</div><h2>Taxi Rush: ${RU.score} miles</h2></div>
+  ${strip("rush",{prog:.5, spd:9})}
+  <div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <p style="margin:0;font-size:19px">${RU.right} correct · ${RU.wrong} wrong · ${nb?"<b>New best!</b>":`Your best: ${S.rushBest}`}</p>
+    ${miss.length?`<div><b>Learn these words again:</b><ul style="margin:6px 0 0">${miss.map(m=>`<li>${esc(m[0])} = <b>${esc(m[1])}</b></li>`).join("")}</ul></div>`:""}
+    <div class="row"><button class="btn blue" id="ragain">Again</button><button class="btn alt" id="rback">Map</button></div></div>${footer()}`;
+  if(nb && RU.score>0){ play("fanfare"); rain(120) }
+  $("#ragain").onclick=startRush; $("#rback").onclick=()=>go("map");
+}
+
+/* ---------- Code ---------- */
+function renderCode(){
+  const n=STATIONS.filter(s=>done(s.id)).length; const golds=STATIONS.filter(s=>medal(s)==="gold").length;
+  app.innerHTML = `<div class="sign"><div class="exit-tab">FINISH</div><div class="eyebrow">Road Trip USA · Unit 1</div><h2>Your leaderboard code</h2></div>
+  ${strip("la",{prog:n===STATIONS.length?.8:.3, spd:n===STATIONS.length?14:8, bill:billStatic("la", n===STATIONS.length?"YOU MADE IT!":"KEEP DRIVING …")})}
+  <div class="card cert">
+    <p style="margin:0;font-size:19px">Driver <b>${esc(S.nick)}</b> · ${n} of ${STATIONS.length} cities · ${golds} gold stamps · Taxi Rush ${S.rushBest||0}</p>
+    <div class="odo"><small>TOTAL MILES</small><div class="digits">${odo(total())}</div></div>
+    <div class="code" id="code">${makeCode()}</div>
+    <p style="margin:0" class="muted">Send this code to your teacher or show it on your iPad. It only works with your nickname and your exact miles – you can’t change it.</p>
+    ${n<STATIONS.length?`<p style="margin:0"><b>Tip:</b> You haven’t visited every city yet. More stations = more miles!</p>`:""}
+    <div class="row" style="justify-content:center"><button class="btn" id="copy">Copy code</button><button class="btn alt" id="back">Map</button></div>
+    <div class="passport" style="justify-content:center">${STATIONS.map(s=>{ const m=medal(s); return `<div class="stamp ${m}"><span class="big">${m?s.city.toUpperCase():"·"}</span>${m?`<span>${m==="gold"?"GOLD":m==="silver"?"SILVER":"VISITED"}</span>`:`<span>${s.city}</span>`}</div>` }).join("")}</div>
+  </div>${footer()}`;
+  $("#back").onclick=()=>go("map");
+  if(n===STATIONS.length) setTimeout(()=>{ fireworks(8); play("fanfare") }, 450);
+  $("#copy").onclick=()=>{ const c=makeCode(); try{ navigator.clipboard.writeText(c).then(()=>toast("Code copied"),()=>sel()) }catch(e){ sel() } };
+  function sel(){ const r=document.createRange(); r.selectNodeContents($("#code")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Code selected – copy it now") }
+}
+
+/* ================= TEACHER & BOARD (owner only, db) ================= */
+let DB=null, USER=null, OWNER=false, BOARD=[], unsub=null, ready=null, LOCAL=false;
+/* Outside Claude (e.g. GitHub Pages): the leaderboard is saved in this browser only. */
+function localDB(){
+  const K="roadtrip-u1-board"; const subs=[];
+  const read=()=>{ try{ return JSON.parse(localStorage.getItem(K)||"{}") }catch(e){ return {} } };
+  const write=o=>{ try{ localStorage.setItem(K, JSON.stringify(o)) }catch(e){} subs.forEach(f=>f(snap())) };
+  const snap=()=>{ const o=read(); return { docs:Object.keys(o).map(id=>({id, data:()=>o[id]})) } };
+  return { collection:()=>({
+    doc:id=>({ set:async d=>{ const o=read(); o[id]=d; write(o) }, delete:async()=>{ const o=read(); delete o[id]; write(o) } }),
+    onSnapshot:f=>{ subs.push(f); setTimeout(()=>f(snap()),0); return ()=>{} } }) };
+}
+function initCaps(){
+  if(ready) return ready;
+  ready = (async()=>{ try{
+    for(let t=0; t<15 && !window.claude?.use; t++) await new Promise(r=>setTimeout(r,100));
+    if(!window.claude?.use){ DB=localDB(); OWNER=true; LOCAL=true;
+      if(!unsub){ unsub = DB.collection("board").onSnapshot(q=>{ BOARD=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.score-a.score||a.nick.localeCompare(b.nick)); if(view==="teacher") drawTeacherBoard(); if(view==="board") drawBeamer() }) }
+      return; }
+    [DB,USER] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    OWNER = USER ? await USER.isOwner() : false;
+    if(DB && !unsub){ unsub = DB.collection("board").onSnapshot(q=>{ BOARD=q.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.score-a.score||a.nick.localeCompare(b.nick)); if(view==="teacher") drawTeacherBoard(); if(view==="board") drawBeamer() }, ()=>{}) }
+  }catch(e){} })();
+  return ready;
+}
+function boardRows(withDel){
+  if(!BOARD.length) return `<div class="card muted">No codes yet. When your students finish, paste their codes ${withDel?"above":"on the teacher page"} – the leaderboard fills up here.</div>`;
+  return BOARD.map((r,i)=>`<div class="brow"><div class="rk">${i+1}</div><div class="nm">${esc(r.nick)}</div><div class="pt">${r.score}</div>${withDel?`<button class="del" data-id="${esc(r.id)}">Remove</button>`:"<span></span>"}</div>`).join("");
+}
+async function renderTeacher(){
+  view="teacher";
+  app.innerHTML = `<div class="sign"><div class="exit-tab">TEACHER</div><div class="eyebrow">Road Trip USA · Unit 1</div><h2>Leaderboard: enter codes</h2></div><div class="card muted" id="tw">Checking access…</div>${footer()}`;
+  await initCaps();
+  if(!DB || !OWNER){ $("#tw").innerHTML = `This page is for the teacher who owns this game. Open it while you are signed in to Claude. <br><br><a href="#" id="home">Back to the game</a>`; $("#home").onclick=e=>{e.preventDefault(); location.hash=""}; return }
+  $("#tw").outerHTML = `<div class="card" style="display:flex;flex-direction:column;gap:10px">
+    <label for="codes"><b>Paste one or more codes</b> (one per line, e.g. LENA8B-3450-K7Q2). For each nickname only the best score is kept.</label>
+    <textarea id="codes" rows="5" spellcheck="false" autocapitalize="characters"></textarea>
+    <div class="row"><button class="btn" id="add">Add to leaderboard</button><a class="btn alt small" href="#board" style="text-decoration:none">Open beamer view</a><button class="btn alt small" id="clear">Clear leaderboard</button></div>
+    <div class="log" id="log"></div>${LOCAL?`<p class="muted" style="margin:0;font-size:14px">The leaderboard is saved in this browser on this device. Use the same device and browser for the beamer view.</p>`:""}</div>
+  <div class="board" id="tb"></div>`;
+  drawTeacherBoard();
+  $("#add").onclick=addCodes;
+  let armed=0; $("#clear").onclick=async()=>{ const b=$("#clear"); if(Date.now()-armed>4000){ armed=Date.now(); b.textContent="Tap again to delete ALL entries"; b.classList.add("del","arm"); return }
+    b.disabled=true; for(const r of BOARD){ try{ await DB.collection("board").doc(r.id).delete() }catch(e){} } b.disabled=false; b.textContent="Clear leaderboard"; b.classList.remove("del","arm"); toast("Leaderboard cleared") };
+}
+function drawTeacherBoard(){ const tb=$("#tb"); if(!tb) return; tb.innerHTML=boardRows(true);
+  tb.querySelectorAll(".del").forEach(b=>b.onclick=async()=>{ if(!b.classList.contains("arm")){ b.classList.add("arm"); b.textContent="Sure?"; setTimeout(()=>{ if(b.isConnected){ b.classList.remove("arm"); b.textContent="Remove" } },3000); return }
+    b.disabled=true; try{ await DB.collection("board").doc(b.dataset.id).delete() }catch(e){ toast("Could not remove – try again") } }); }
+async function addCodes(){
+  const lines=$("#codes").value.split(/\n|,|;/).map(s=>s.trim()).filter(Boolean); const log=$("#log"); log.innerHTML="";
+  if(!lines.length){ toast("Paste at least one code."); return }
+  $("#add").disabled=true;
+  for(const l of lines){
+    const p=parseCode(l);
+    if(!p){ log.insertAdjacentHTML("beforeend",`<div class="no">✗ ${esc(l)} – not a valid code (format NAME-MILES-XXXX)</div>`); continue }
+    if(p.bad){ log.insertAdjacentHTML("beforeend",`<div class="no">✗ ${esc(l)} – check digits don’t match (typo or changed miles?)</div>`); continue }
+    const id=p.nick.toLowerCase(); const cur=BOARD.find(r=>r.id===id);
+    if(cur && cur.score>=p.score){ log.insertAdjacentHTML("beforeend",`<div>• ${esc(p.nick)} already has ${cur.score} – kept the higher score</div>`); continue }
+    try{ await DB.collection("board").doc(id).set({nick:p.nick, score:p.score, at:Date.now()}); log.insertAdjacentHTML("beforeend",`<div class="ok">✓ ${esc(p.nick)}: ${p.score} miles</div>`) }
+    catch(e){ log.insertAdjacentHTML("beforeend",`<div class="no">✗ ${esc(p.nick)} – could not save (${esc(e?.code||"error")})</div>`) }
+  }
+  $("#add").disabled=false; $("#codes").value="";
+}
+async function renderBoard(){
+  view="board";
+  app.innerHTML = `<div class="sign"><div class="exit-tab">CLASS</div><div class="eyebrow">Road Trip USA · Unit 1</div><h1 style="font-size:clamp(32px,6vw,54px)">Leaderboard</h1></div><div id="bw" class="board beamer"><div class="card muted">Loading…</div></div>${footer()}`;
+  await initCaps();
+  if(!DB){ $("#bw").innerHTML=`<div class="card">Your teacher shows the class leaderboard in the lesson. Finish your trip and send your <b>code</b> to your teacher! <br><br><a href="#" id="home">Back to the game</a></div>`; $("#home").onclick=e=>{e.preventDefault(); location.hash=""}; return }
+  drawBeamer();
+}
+function drawBeamer(){ const b=$("#bw"); if(b) b.innerHTML=boardRows(false) }
+
+/* ================= ROUTER ================= */
+function route(){
+  const h=location.hash.replace("#","");
+  if(h==="teacher") return renderTeacher();
+  if(h==="board") return renderBoard();
+  if(view==="teacher"||view==="board"||view==="start"){ S.nick ? go("map") : go("start") }
+}
+addEventListener("hashchange", route);
+applyTOD(); fxInit(); sndBtn();
+route();
+</script>
+
+</body>
+</html>
